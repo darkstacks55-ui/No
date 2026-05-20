@@ -8,7 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 
 // ───── OPENAI API ─────
 // 🔥 MET TON API OPENAI ICI
-const OPENAI_API_KEY = "COLLE_TON_API_OPENAI_ICI";
+const OPENAI_API_KEY = "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";
 
 
 // ───── FREE API BACKUP ─────
