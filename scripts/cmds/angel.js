@@ -2,17 +2,19 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
+// ───── OPENAI API ─────
+const OPENAI_API_KEY = "MET_TON_API_OPENAI_ICI";
+
+// ───── OWNER ─────
+const OWNER_UID = "61573867120837";
+const OWNER_NAME = "Shade";
+
+// ───── MEMORY FILE ─────
 const memoryFile = path.join(__dirname, "cache", "angel_memory.json");
 
 if (!fs.existsSync(memoryFile)) {
   fs.writeFileSync(memoryFile, "{}");
 }
-
-const OWNER_UID = "61573867120837";
-const OWNER_NAME = "Shade";
-
-// ───── GEMINI API ─────
-const API_KEY = "AIzaSyBTILUPF0fUlt_686C8tWX3HomBjQ44qxA";
 
 // ───── MEMORY ─────
 let memory = {};
@@ -29,7 +31,7 @@ function saveMemory() {
   fs.writeFileSync(memoryFile, JSON.stringify(memory, null, 2));
 }
 
-// ───── STYLE KAWAII ─────
+// ───── FONT STYLE ─────
 function font(text) {
   return text
     .replace(/a/g, "𝘢").replace(/b/g, "𝘣").replace(/c/g, "𝘤")
@@ -48,37 +50,77 @@ function frame(msg) {
   return `🌸 𝗔𝗡𝗚𝗘𝗟 𝗔𝗜 🌸\n━━━━━━━━━━\n${msg}\n━━━━━━━━━━`;
 }
 
-// ───── IA CALL GEMINI ─────
+// ───── AI CALL ─────
 async function callAI(prompt) {
+
+  // ───── OPENAI ─────
   try {
 
-    const res = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
+    const openai = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
       {
-        contents: [
+        model: "gpt-4o-mini",
+        messages: [
           {
-            parts: [
-              { text: prompt }
-            ]
+            role: "system",
+            content:
+              "Tu es ANGEL 🤍 une IA féminine kawaii, douce, intelligente et naturelle."
+          },
+          {
+            role: "user",
+            content: prompt
           }
         ]
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${OPENAI_API_KEY}`
+        },
+        timeout: 20000
+      }
+    );
+
+    const reply = openai.data?.choices?.[0]?.message?.content;
+
+    if (reply) return reply;
+
+  } catch (err) {
+
+    console.log("OpenAI failed");
+
+  }
+
+  // ───── FREE FALLBACK ─────
+  try {
+
+    const free = await axios.get(
+      "https://ai-chat-gpt-4-lite.onrender.com/api/hercai",
+      {
+        params: {
+          question: prompt
+        },
+        timeout: 15000
       }
     );
 
     return (
-      res.data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      free.data?.reply ||
+      free.data?.response ||
+      free.data?.message ||
       "… Angel réfléchit doucement 🌸"
     );
 
   } catch (err) {
 
-    console.log(err.response?.data || err.message);
+    console.log("Fallback failed");
 
-    return "… erreur système angel 😿";
   }
+
+  return "… erreur système angel 😿";
 }
 
-// ───── CORE ─────
+// ───── GENERATE ─────
 async function generate(userID, userName, message) {
 
   if (!memory[userID]) memory[userID] = [];
@@ -140,18 +182,18 @@ Tu lui réponds avec plus d’attention et de douceur 💖
   return frame(font(reply));
 }
 
-// ───── EXPORT BOT ─────
+// ───── EXPORT ─────
 module.exports = {
   config: {
     name: "angel",
-    version: "2.1",
+    version: "3.0",
     author: "Shade",
     role: 0,
     category: "ai",
-    shortDescription: "Angel AI kawaii Gemini"
+    shortDescription: "Angel AI OpenAI Hybrid"
   },
 
-  // commande !angel
+  // ───── COMMAND ─────
   onStart: async function ({ message, event, args, api }) {
 
     const input = args.join(" ").trim();
@@ -161,7 +203,6 @@ module.exports = {
     const userName =
       (await api.getUserInfo(userID))[userID]?.name || "toi";
 
-    // juste !angel
     if (!input) {
 
       await message.reply({
@@ -182,14 +223,13 @@ module.exports = {
     return message.reply(reply);
   },
 
-  // message direct : angel salut
+  // ───── CHAT MODE ─────
   onChat: async function ({ event, message, api }) {
 
     if (!event.body) return;
 
     const body = event.body.trim();
 
-    // activation sans !
     if (!body.toLowerCase().startsWith("angel")) return;
 
     const userID = event.senderID;
@@ -197,7 +237,6 @@ module.exports = {
     const userName =
       (await api.getUserInfo(userID))[userID]?.name || "toi";
 
-    // juste "angel"
     if (body.toLowerCase() === "angel") {
 
       await message.reply({
@@ -209,7 +248,6 @@ module.exports = {
       );
     }
 
-    // angel + message
     const input = body.slice(5).trim();
 
     if (!input) return;
