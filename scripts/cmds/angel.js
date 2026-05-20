@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 // ───── OPENAI API ─────
-const OPENAI_API_KEY = "MET_TON_API_OPENAI_ICI";
+const OPENAI_API_KEY = "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";
 
 // ───── OWNER ─────
 const OWNER_UID = "61573867120837";
