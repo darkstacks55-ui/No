@@ -12,8 +12,8 @@ if (!fs.existsSync(memoryFile)) {
 const CREATOR_UID = "61573867120837";
 const CREATOR_NAME = "Shade";
 
-// 🔑 GEMINI API
-const API_KEY = "AIzaSyBTILUPF0fUlt_686C8tWX3HomBjQ44qxA";
+// 🔑 OPENAI API 👇👇👇
+const OPENAI_API_KEY = "COLLE_TA_CLE_OPENAI_ICI";
 
 // 🧠 mémoire
 let memory = {};
@@ -45,27 +45,52 @@ function frame(msg) {
   return `╭━━━ ❄️ 𝗦𝗔𝗘 𝗜𝗧𝗢𝗦𝗛𝗜 ❄️ ━━━╮\n${msg}\n╰━━━━━━━━━━━━━━━━━━╯`;
 }
 
-// 🤖 GEMINI CALL
-async function callAI(prompt) {
+// 🤖 OPENAI (principal)
+async function callOpenAI(prompt) {
   try {
     const res = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
+      "https://api.openai.com/v1/chat/completions",
       {
-        contents: [
+        model: "gpt-4o-mini",
+        messages: [
           {
-            parts: [{ text: prompt }]
+            role: "system",
+            content:
+              "Tu es Sae Itoshi. Réponds froidement, intelligemment, style anime."
+          },
+          {
+            role: "user",
+            content: prompt
           }
         ]
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`
+        }
       }
     );
 
-    return (
-      res.data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "…"
+    return res.data?.choices?.[0]?.message?.content || null;
+  } catch {
+    return null;
+  }
+}
+
+// 🥈 BACKUP API (si OpenAI crash)
+async function callBackup(prompt) {
+  try {
+    const res = await axios.get(
+      "https://arychauhann.onrender.com/api/gemini-proxy2",
+      {
+        params: { prompt }
+      }
     );
 
-  } catch (err) {
-    return "Tch… système instable.";
+    return res.data?.reply || null;
+  } catch {
+    return null;
   }
 }
 
@@ -76,7 +101,6 @@ function getPersonality(userID) {
 
 // 💬 prompt
 function buildPrompt(userID, userName, text, history) {
-
   const mood = getPersonality(userID);
 
   let style = "";
@@ -126,36 +150,44 @@ function updateMemory(userID, text, reply) {
 module.exports = {
   config: {
     name: "sae",
-    version: "2.2",
+    version: "3.0",
     author: "Shade",
     role: 0,
     category: "ai"
   },
 
   onChat: async function ({ event, message, api }) {
-
     if (!event.body) return;
 
-    const body = event.body.trim().toLowerCase();
+    const body = event.body.trim();
 
-    // ✅ déclenchement naturel : "sae" OU "sae message"
-    if (!body.startsWith("sae")) return;
+    if (!body.toLowerCase().startsWith("sae")) return;
 
-    const text = event.body.slice(3).trim();
-    if (!text) {
-      return message.reply(frame(font("…")));
-    }
+    const text = body.slice(3).trim();
 
     const userID = event.senderID;
 
     const userName =
       (await api.getUserInfo(userID))[userID]?.name || "inconnu";
 
-    if (!memory[userID]) memory[userID] = [];
+    if (!text) {
+      return message.reply(frame(font("...")));
+    }
 
-    const prompt = buildPrompt(userID, userName, text, memory[userID]);
+    const prompt = buildPrompt(userID, userName, text, memory[userID] || []);
 
-    const reply = await callAI(prompt);
+    // 🔥 OPENAI FIRST
+    let reply = await callOpenAI(prompt);
+
+    // 🥈 BACKUP
+    if (!reply) {
+      reply = await callBackup(prompt);
+    }
+
+    // 🧼 FINAL FALLBACK
+    if (!reply) {
+      reply = "Tch… système instable.";
+    }
 
     updateMemory(userID, text, reply);
 
