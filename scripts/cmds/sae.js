@@ -157,40 +157,61 @@ module.exports = {
   },
 
   onChat: async function ({ event, message, api }) {
-    if (!event.body) return;
 
-    const body = event.body.trim();
+  if (!event.body) return;
 
-    if (!body.toLowerCase().startsWith("sae")) return;
+  const body = event.body.trim();
+  const userID = event.senderID;
 
-    const text = body.slice(3).trim();
+  // ───── USER INFO ─────
+  const userName =
+    (await api.getUserInfo(userID))[userID]?.name || "inconnu";
 
-    const userID = event.senderID;
+  // ───── 1. SI MESSAGE COMMENCE PAR "sae" ─────
+  const isSaeCommand = body.toLowerCase().startsWith("sae");
 
-    const userName =
-      (await api.getUserInfo(userID))[userID]?.name || "inconnu";
+  const textFromCommand = isSaeCommand ? body.slice(3).trim() : null;
 
-    if (!text) {
-      return message.reply(frame(font("...")));
-    }
+  // ───── 2. SI C'EST UNE RÉPONSE À SAE ─────
+  const isReplyToSae =
+    event.messageReply &&
+    event.messageReply.senderID == api.getCurrentUserID();
 
-    const prompt = buildPrompt(userID, userName, text, memory[userID] || []);
+  // ───── SI AUCUN DES DEUX → STOP ─────
+  if (!isSaeCommand && !isReplyToSae) return;
 
-    // 🔥 OPENAI FIRST
-    let reply = await callOpenAI(prompt);
+  // ───── TEXTE FINAL ─────
+  let text = "";
 
-    // 🥈 BACKUP
-    if (!reply) {
-      reply = await callBackup(prompt);
-    }
-
-    // 🧼 FINAL FALLBACK
-    if (!reply) {
-      reply = "Tch… système instable.";
-    }
-
-    updateMemory(userID, text, reply);
-
-    return message.reply(frame(font(reply)));
+  if (isSaeCommand) {
+    text = textFromCommand;
+  } else {
+    text = body; // réponse normale
   }
-};
+
+  if (!text) {
+    return message.reply(frame(font("...")));
+  }
+
+  // ───── PROMPT + IA ─────
+  const prompt = buildPrompt(
+    userID,
+    userName,
+    text,
+    memory[userID] || []
+  );
+
+  let reply = await callOpenAI(prompt);
+
+  if (!reply) {
+    reply = await callBackup(prompt);
+  }
+
+  if (!reply) {
+    reply = "Tch… système instable.";
+  }
+
+  updateMemory(userID, text, reply);
+
+  return message.reply(frame(font(reply)));
+  }
