@@ -29,7 +29,7 @@ module.exports = {
 
   onStart: async function ({ message }) {
 
-    const imageURL = "https://i.imgur.com/7g7Yd8v.png";
+    const imageURL = "https://files.catbox.moe/ihbb9m.png";
 
     const categories = {};
 
