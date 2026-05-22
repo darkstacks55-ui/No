@@ -2,36 +2,30 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
-// ───── OPENAI API ─────
-const OPENAI_API_KEY = "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";
-
 // ───── OWNER ─────
 const OWNER_UID = "61573867120837";
 const OWNER_NAME = "Shade";
 
-// ───── MEMORY FILE ─────
+// ───── MEMORY ─────
 const memoryFile = path.join(__dirname, "cache", "angel_memory.json");
 
 if (!fs.existsSync(memoryFile)) {
   fs.writeFileSync(memoryFile, "{}");
 }
 
-// ───── MEMORY ─────
 let memory = {};
 
-if (fs.existsSync(memoryFile)) {
-  try {
-    memory = JSON.parse(fs.readFileSync(memoryFile, "utf8"));
-  } catch {
-    memory = {};
-  }
+try {
+  memory = JSON.parse(fs.readFileSync(memoryFile, "utf8"));
+} catch {
+  memory = {};
 }
 
 function saveMemory() {
   fs.writeFileSync(memoryFile, JSON.stringify(memory, null, 2));
 }
 
-// ───── FONT STYLE ─────
+// ───── FONT ─────
 function font(text) {
   return text
     .replace(/a/g, "𝘢").replace(/b/g, "𝘣").replace(/c/g, "𝘤")
@@ -50,74 +44,25 @@ function frame(msg) {
   return `🌸 𝗔𝗡𝗚𝗘𝗟 𝗔𝗜 🌸\n━━━━━━━━━━\n${msg}\n━━━━━━━━━━`;
 }
 
-// ───── AI CALL ─────
+// ───── FAKE AI (SAFE fallback) ─────
 async function callAI(prompt) {
-
-  // ───── OPENAI ─────
   try {
-
-    const openai = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "Tu es ANGEL 🤍 une IA féminine kawaii, douce, intelligente et naturelle."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_API_KEY}`
-        },
-        timeout: 20000
-      }
-    );
-
-    const reply = openai.data?.choices?.[0]?.message?.content;
-
-    if (reply) return reply;
-
-  } catch (err) {
-
-    console.log("OpenAI failed");
-
-  }
-
-  // ───── FREE FALLBACK ─────
-  try {
-
-    const free = await axios.get(
+    const res = await axios.get(
       "https://ai-chat-gpt-4-lite.onrender.com/api/hercai",
       {
-        params: {
-          question: prompt
-        },
+        params: { question: prompt },
         timeout: 15000
       }
     );
 
     return (
-      free.data?.reply ||
-      free.data?.response ||
-      free.data?.message ||
+      res.data?.reply ||
+      res.data?.response ||
       "… Angel réfléchit doucement 🌸"
     );
-
-  } catch (err) {
-
-    console.log("Fallback failed");
-
+  } catch {
+    return "… système instable 😿";
   }
-
-  return "… erreur système angel 😿";
 }
 
 // ───── GENERATE ─────
@@ -125,155 +70,74 @@ async function generate(userID, userName, message) {
 
   if (!memory[userID]) memory[userID] = [];
 
-  memory[userID].push({
-    name: userName,
-    msg: message
-  });
+  memory[userID].push({ name: userName, msg: message });
 
-  if (memory[userID].length > 30) {
-    memory[userID].shift();
-  }
+  if (memory[userID].length > 25) memory[userID].shift();
 
   saveMemory();
 
   const isOwner = userID === OWNER_UID;
 
   let prompt = `
-Tu es ANGEL 🤍 une IA féminine kawaii, douce et intelligente.
+Tu es ANGEL 🤍 IA kawaii douce et intelligente.
 
-Règles:
-- Tu es polie
-- Tu es douce
-- Tu es stylée
-- Tu peux être légèrement taquine
-- Tu respectes tout le monde
-- Tu réponds naturellement
-- Tu utilises parfois des emojis 🌸✨💖
-
-Créateur:
-${OWNER_NAME} (${OWNER_UID})
-
-Conversation:
-${memory[userID]
-  .map(m => `${m.name}: ${m.msg}`)
-  .join("\n")}
+Utilisateur: ${userName}
+Message: ${message}
 `;
 
   if (isOwner) {
-    prompt += `
-Tu reconnais Shade comme ton créateur.
-Tu lui réponds avec plus d’attention et de douceur 💖
-`;
-  }
-
-  if (/qui.*cr[eé]e|creator|createur/i.test(message)) {
-    return frame(font("Mon créateur est Shade 🌸✨"));
+    prompt += "\nTu respectes Shade ton créateur 💖";
   }
 
   const reply = await callAI(prompt);
 
-  memory[userID].push({
-    name: "ANGEL",
-    msg: reply
-  });
+  memory[userID].push({ name: "ANGEL", msg: reply });
 
   saveMemory();
 
   return frame(font(reply));
 }
 
-// ───── EXPORT ─────
+// ───── BOT ─────
 module.exports = {
   config: {
     name: "angel",
-    version: "3.0",
+    version: "3.1",
     author: "Shade",
-    role: 0,
-    category: "ai",
-    shortDescription: "Angel AI OpenAI Hybrid"
+    category: "ai"
   },
 
-  // ───── COMMAND ─────
-  onStart: async function ({ message, event, args, api }) {
+  onChat: async function ({ event, message, api }) {
 
-    const input = args.join(" ").trim();
+    if (!event.body) return;
+
+    const body = event.body.trim();
+    const lower = body.toLowerCase();
 
     const userID = event.senderID;
-
     const userName =
       (await api.getUserInfo(userID))[userID]?.name || "toi";
 
-    if (!input) {
-
-      await message.reply({
-        sticker: "125881936546154"
-      });
-
-      return message.reply(
-        frame(font("bonjour 🌸 je suis Angel… parle-moi doucement 💖"))
-      );
+    // ───── 1. reply si on répond à Angel ─────
+    if (
+      event.messageReply &&
+      event.messageReply.senderID == api.getCurrentUserID()
+    ) {
+      return message.reply(await generate(userID, userName, body));
     }
 
-    const reply = await generate(
-      userID,
-      userName,
-      input
-    );
+    // ───── 2. activation "angel" ─────
+    if (!lower.startsWith("angel")) return;
 
-    return message.reply(reply);
-  },
+    // juste "angel"
+    if (lower === "angel") {
+      return message.reply(frame(font("bonjour 🌸 je suis Angel 💖")));
+    }
 
-  // ───── CHAT AUTO + REPLY SYSTEM ─────
-onChat: async function ({ event, message, api }) {
+    // angel + message
+    const input = body.slice(5).trim();
+    if (!input) return;
 
-  if (!event.body) return;
-
-  const body = event.body.trim();
-  const userID = event.senderID;
-
-  const userName =
-    (await api.getUserInfo(userID))[userID]?.name || "toi";
-
-  // ───── SI LA PERSONNE REPOND A ANGEL ─────
-  if (
-    event.messageReply &&
-    event.messageReply.senderID == api.getCurrentUserID()
-  ) {
-
-    const reply = await generate(
-      userID,
-      userName,
-      body
-    );
-
-    return message.reply(reply);
+    return message.reply(await generate(userID, userName, input));
   }
-
-  // ───── ACTIVATION AVEC "angel" ─────
-  if (!body.toLowerCase().startsWith("angel")) return;
-
-  // juste "angel"
-  if (body.toLowerCase() === "angel") {
-
-    await message.reply({
-      sticker: "125881936546154"
-    });
-
-    return message.reply(
-      frame(font("bonjour 🌸 je suis Angel… parle-moi doucement 💖"))
-    );
-  }
-
-  // angel + message
-  const input = body.slice(5).trim();
-
-  if (!input) return;
-
-  const reply = await generate(
-    userID,
-    userName,
-    input
-  );
-
-  return message.reply(reply);
-}
+};
