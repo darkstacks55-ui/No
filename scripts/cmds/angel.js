@@ -2,9 +2,12 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
-// ───── OWNER ─────
+// ───── 👑 OWNER ─────
 const OWNER_UID = "61573867120837";
 const OWNER_NAME = "Shade";
+
+// ───── 🔑 OPENAI API (👉 ICI TU METS TON API) ─────
+const OPENAI_API_KEY = "MET_TA_CLE_ICI";
 
 // ───── MEMORY ─────
 const memoryFile = path.join(__dirname, "cache", "angel_memory.json");
@@ -44,10 +47,45 @@ function frame(msg) {
   return `🌸 𝗔𝗡𝗚𝗘𝗟 𝗔𝗜 🌸\n━━━━━━━━━━\n${msg}\n━━━━━━━━━━`;
 }
 
-// ───── FAKE AI (SAFE fallback) ─────
+// ───── 🤖 AI CORE (OPENAI + FALLBACK) ─────
 async function callAI(prompt) {
+
+  // 🔥 1. OPENAI (PRIORITY)
   try {
-    const res = await axios.get(
+    const res = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Tu es ANGEL 🤍 une IA kawaii, douce et intelligente."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ]
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        timeout: 20000
+      }
+    );
+
+    const reply = res.data?.choices?.[0]?.message?.content;
+    if (reply) return reply;
+
+  } catch (e) {
+    console.log("OpenAI failed");
+  }
+
+  // 🌸 2. FALLBACK API GRATUITE
+  try {
+    const free = await axios.get(
       "https://ai-chat-gpt-4-lite.onrender.com/api/hercai",
       {
         params: { question: prompt },
@@ -56,13 +94,16 @@ async function callAI(prompt) {
     );
 
     return (
-      res.data?.reply ||
-      res.data?.response ||
+      free.data?.reply ||
+      free.data?.response ||
       "… Angel réfléchit doucement 🌸"
     );
-  } catch {
-    return "… système instable 😿";
+
+  } catch (e) {
+    console.log("Fallback failed");
   }
+
+  return "… système instable 😿";
 }
 
 // ───── GENERATE ─────
@@ -79,7 +120,7 @@ async function generate(userID, userName, message) {
   const isOwner = userID === OWNER_UID;
 
   let prompt = `
-Tu es ANGEL 🤍 IA kawaii douce et intelligente.
+Tu es ANGEL 🤍 IA kawaii.
 
 Utilisateur: ${userName}
 Message: ${message}
@@ -102,7 +143,7 @@ Message: ${message}
 module.exports = {
   config: {
     name: "angel",
-    version: "3.1",
+    version: "4.0",
     author: "Shade",
     category: "ai"
   },
@@ -115,6 +156,7 @@ module.exports = {
     const lower = body.toLowerCase();
 
     const userID = event.senderID;
+
     const userName =
       (await api.getUserInfo(userID))[userID]?.name || "toi";
 
