@@ -7,7 +7,7 @@ const OWNER_UID = "61573867120837";
 const OWNER_NAME = "Shade";
 
 // ───── 🔑 OPENAI API (👉 ICI TU METS TON API) ─────
-const OPENAI_API_KEY = "MET_TA_CLE_ICI";
+const OPENAI_API_KEY = "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";
 
 // ───── MEMORY ─────
 const memoryFile = path.join(__dirname, "cache", "angel_memory.json");
