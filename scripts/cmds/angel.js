@@ -47,7 +47,7 @@ async function callAngelAPI(prompt) {
     // 🔥 OPENAI
     {
       type: "openai",
-      key: "MET_TON_API_OPENAI_ICI"
+      key: "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"
     },
 
     // 🌸 FALLBACKS GRATUITS
