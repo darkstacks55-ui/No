@@ -39,100 +39,49 @@ function font(text) {
     .replace(/y/g, "𝘺").replace(/z/g, "𝘻");
 }
 
-// 🤖 MULTI API SYSTEM
+// 🤖 ANGEL API
 async function callAngelAPI(prompt) {
 
-  const services = [
+  try {
 
-    // 🔥 OPENAI
-    {
-      type: "openai",
-      key: "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"
-    },
-
-    // 🌸 FALLBACKS GRATUITS
-    {
-      url: "https://arychauhann.onrender.com/api/gemini-proxy2",
-      params: { prompt }
-    },
-
-    {
-      url: "https://ai-chat-gpt-4-lite.onrender.com/api/hercai",
-      params: { question: prompt }
-    }
-  ];
-
-  for (const s of services) {
-
-    try {
-
-      // ───── OPENAI ─────
-      if (s.type === "openai") {
-
-        const res = await axios.post(
-          "https://api.openai.com/v1/chat/completions",
-          {
-            model: "gpt-4o-mini",
-            messages: [
-              {
-                role: "system",
-                content:
-                  "Tu es ANGEL 🤍 une IA féminine kawaii, douce, stylée et naturelle."
-              },
-              {
-                role: "user",
-                content: prompt
-              }
-            ]
-          },
-          {
-            headers: {
-              "Authorization": `Bearer ${s.key}`,
-              "Content-Type": "application/json"
-            },
-            timeout: 20000
-          }
-        );
-
-        const reply =
-          res.data?.choices?.[0]?.message?.content;
-
-        if (reply) return reply.trim();
-      }
-
-      // ───── FREE APIs ─────
-else {
-
-  const res = await axios.get(
-    s.url,
-    {
-      params: {
-        ...s.params,
-
-        question: `
+    const res = await axios.get(
+      "https://ai-chat-gpt-4-lite.onrender.com/api/hercai",
+      {
+        params: {
+          question: `
 Tu es ANGEL 🌸
-IA féminine kawaii.
-Tu réponds en français.
-Réponses courtes et naturelles.
-Pas de réponses techniques.
-Pas de longs paragraphes bizarres.
 
-Utilisateur:
+Tu es :
+- douce
+- kawaii
+- naturelle
+- féminine
+- intelligente
+- légèrement taquine
+
+Règles :
+- Tu réponds en français
+- Réponses courtes
+- Réponses naturelles
+- Pas de texte technique
+- Pas de longs paragraphes anglais
+- Tu utilises parfois 🌸✨💖
+
+Utilisateur :
 ${prompt}
 `
-      },
+        },
 
-      timeout: 15000
-    }
-  );
+        timeout: 15000
+      }
+    );
 
-  let reply =
-    res.data?.reply ||
-    res.data?.response ||
-    res.data?.result ||
-    res.data?.gpt4;
-
-  if (reply) {
+    let reply =
+      res.data?.reply ||
+      res.data?.response ||
+      res.data?.result ||
+      res.data?.gpt4 ||
+      "🌸 Angel réfléchit doucement...";
 
     // 🧼 nettoyage
     reply = reply
@@ -141,16 +90,18 @@ ${prompt}
       .replace(/analysis/gi, "")
       .replace(/complex/gi, "")
       .replace(/however/gi, "")
+      .replace(/I can see that/gi, "")
+      .replace(/multiple possible interpretations/gi, "")
       .trim();
 
     return reply;
-  }
-}
 
-    } catch {}
-  }
+  } catch (err) {
 
-  return "😿 Angel ne peut pas répondre pour le moment...";
+    console.log(err);
+
+    return "😿 Angel ne peut pas répondre pour le moment...";
+  }
 }
 
 // 💬 GENERATE
@@ -169,7 +120,7 @@ async function generateResponse(userID, userName, message) {
 
   saveMemory();
 
-  // 🌸 résumé créateur
+  // 👑 résumé créateur
   if (/^résumé$/i.test(message)) {
 
     if (userID !== OWNER_UID) {
@@ -177,9 +128,10 @@ async function generateResponse(userID, userName, message) {
     }
 
     let summaryPrompt = `
-Tu es ANGEL 🤍
-Résume les conversations des utilisateurs
-de manière kawaii et naturelle 🌸
+Tu es ANGEL 🌸
+
+Résume les conversations
+de manière kawaii et naturelle 💖
 `;
 
     Object.entries(memory).forEach(([uid, msgs]) => {
@@ -198,43 +150,28 @@ ${msgs.map(
 
   // 🌸 prompt principal
   let prompt = `
-Tu es ANGEL 🤍
+Créateur : ${OWNER_NAME}
 
-Tu es :
-- douce
-- kawaii
-- intelligente
-- légèrement taquine
-- naturelle
-
-Créateur :
-${OWNER_NAME}
-
-Utilisateur :
-${userName}
+Utilisateur : ${userName}
 
 Conversation :
+
 ${memory[userID]
   .map(m => `${m.name}: ${m.message}`)
   .join("\n")}
-
-Réponds naturellement avec parfois :
-🌸 ✨ 💖
 `;
 
   // 👑 créateur
   if (userID === OWNER_UID) {
+
     prompt += `
 Tu reconnais Shade comme ton créateur 💖
 `;
   }
 
-  // 👀 qui t'a créé
+  // 🌸 créateur question
   if (/createur|qui.*cree|qui.*fait/i.test(message)) {
-    prompt += `
-Dis seulement :
-"Mon créateur est Shade 🌸✨"
-`;
+    return "🌸 Mon créateur est Shade 💖";
   }
 
   const reply = await callAngelAPI(prompt);
@@ -255,7 +192,7 @@ module.exports = {
   config: {
     name: "angel",
     aliases: ["angelai"],
-    version: "5.0",
+    version: "6.0",
     author: "Shade",
     role: 0,
     category: "ai",
@@ -277,11 +214,13 @@ module.exports = {
     const userName =
       (await api.getUserInfo(userID))[userID]?.name || "toi";
 
+    // juste !angel
     if (!input) {
+
       return message.reply(
-        frame(font(
-          "bonjour 🌸 je suis Angel 💖"
-        ))
+        frame(
+          font("bonjour 🌸 je suis Angel 💖")
+        )
       );
     }
 
@@ -291,7 +230,9 @@ module.exports = {
       input
     );
 
-    return message.reply(frame(font(reply)));
+    return message.reply(
+      frame(font(reply))
+    );
   },
 
   // 🌸 CHAT SYSTEM
@@ -323,19 +264,23 @@ module.exports = {
         body
       );
 
-      return message.reply(frame(font(reply)));
+      return message.reply(
+        frame(font(reply))
+      );
     }
 
-    // 🌸 activation
+    // 🌸 activation avec angel
     if (!body.toLowerCase().startsWith("angel")) return;
 
     const input = body.slice(5).trim();
 
+    // juste "angel"
     if (!input) {
+
       return message.reply(
-        frame(font(
-          "oui ? 🌸"
-        ))
+        frame(
+          font("oui ? 🌸")
+        )
       );
     }
 
@@ -345,6 +290,8 @@ module.exports = {
       input
     );
 
-    return message.reply(frame(font(reply)));
+    return message.reply(
+      frame(font(reply))
+    );
   }
 };
