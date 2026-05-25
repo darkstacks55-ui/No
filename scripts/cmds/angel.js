@@ -11,7 +11,11 @@ const OWNER_NAME = "Shade";
 let memory = {};
 
 if (fs.existsSync(memoryFile)) {
-  memory = JSON.parse(fs.readFileSync(memoryFile, "utf8"));
+  try {
+    memory = JSON.parse(fs.readFileSync(memoryFile, "utf8"));
+  } catch {
+    memory = {};
+  }
 }
 
 function saveMemory() {
@@ -50,38 +54,33 @@ async function callAngelAPI(prompt) {
         params: {
           question: `
 Tu es ANGEL 🌸
-
-Tu es :
-- douce
-- kawaii
-- naturelle
-- féminine
-- intelligente
-- légèrement taquine
+IA féminine kawaii, douce et naturelle.
 
 Règles :
-- Tu réponds en français
+- Tu réponds uniquement en français
 - Réponses courtes
-- Réponses naturelles
+- Style mignon et humain
 - Pas de texte technique
-- Pas de longs paragraphes anglais
-- Tu utilises parfois 🌸✨💖
+- Pas de grands paragraphes
+- Utilise parfois 🌸✨💖
 
-Utilisateur :
+Utilisateur:
 ${prompt}
 `
         },
 
-        timeout: 15000
+        timeout: 30000
       }
     );
 
     let reply =
       res.data?.reply ||
       res.data?.response ||
-      res.data?.result ||
-      res.data?.gpt4 ||
-      "🌸 Angel réfléchit doucement...";
+      res.data?.result;
+
+    if (!reply) {
+      return "🌸 Angel réfléchit encore un peu...";
+    }
 
     // 🧼 nettoyage
     reply = reply
@@ -90,88 +89,63 @@ ${prompt}
       .replace(/analysis/gi, "")
       .replace(/complex/gi, "")
       .replace(/however/gi, "")
-      .replace(/I can see that/gi, "")
-      .replace(/multiple possible interpretations/gi, "")
       .trim();
 
     return reply;
 
-  } catch (err) {
+  } catch (e) {
 
-    console.log(err);
+    console.log(e);
 
-    return "😿 Angel ne peut pas répondre pour le moment...";
+    return "😿 Angel dort un peu pour le moment...";
   }
 }
 
 // 💬 GENERATE
 async function generateResponse(userID, userName, message) {
 
-  if (!memory[userID]) memory[userID] = [];
+  if (!memory[userID]) {
+    memory[userID] = [];
+  }
 
   memory[userID].push({
     name: userName,
     message
   });
 
+  // limite mémoire
   if (memory[userID].length > 50) {
     memory[userID].shift();
   }
 
   saveMemory();
 
-  // 👑 résumé créateur
-  if (/^résumé$/i.test(message)) {
-
-    if (userID !== OWNER_UID) {
-      return "❌ Seul Shade peut voir ça 💖";
-    }
-
-    let summaryPrompt = `
-Tu es ANGEL 🌸
-
-Résume les conversations
-de manière kawaii et naturelle 💖
-`;
-
-    Object.entries(memory).forEach(([uid, msgs]) => {
-
-      summaryPrompt += `
-UID: ${uid}
-
-${msgs.map(
-  m => `${m.name}: ${m.message}`
-).join("\n")}
-`;
-    });
-
-    return await callAngelAPI(summaryPrompt);
+  // 👑 créateur
+  if (/createur|qui.*cree|qui.*fait/i.test(message)) {
+    return "Mon créateur est Shade 🌸✨";
   }
 
-  // 🌸 prompt principal
   let prompt = `
-Créateur : ${OWNER_NAME}
+Tu es ANGEL 🤍
 
-Utilisateur : ${userName}
+Créateur :
+${OWNER_NAME}
+
+Utilisateur :
+${userName}
 
 Conversation :
-
 ${memory[userID]
   .map(m => `${m.name}: ${m.message}`)
   .join("\n")}
 `;
 
-  // 👑 créateur
+  // 💖 mode créateur
   if (userID === OWNER_UID) {
-
     prompt += `
 Tu reconnais Shade comme ton créateur 💖
+Tu lui réponds avec plus de douceur.
 `;
-  }
-
-  // 🌸 créateur question
-  if (/createur|qui.*cree|qui.*fait/i.test(message)) {
-    return "🌸 Mon créateur est Shade 💖";
   }
 
   const reply = await callAngelAPI(prompt);
@@ -196,7 +170,7 @@ module.exports = {
     author: "Shade",
     role: 0,
     category: "ai",
-    shortDescription: "Angel AI kawaii 🌸"
+    shortDescription: "Angel AI 🌸"
   },
 
   // 🌸 !angel
@@ -224,6 +198,7 @@ module.exports = {
       );
     }
 
+    // !angel salut
     const reply = await generateResponse(
       userID,
       userName,
@@ -251,11 +226,12 @@ module.exports = {
     const userName =
       (await api.getUserInfo(userID))[userID]?.name || "toi";
 
-    // 💖 reply à Angel
+    // 💖 reply uniquement à Angel
     if (
       event.messageReply &&
-      event.messageReply.senderID ==
-      api.getCurrentUserID()
+      event.messageReply.senderID == api.getCurrentUserID() &&
+      event.messageReply.body &&
+      event.messageReply.body.includes("ANGEL AI")
     ) {
 
       const reply = await generateResponse(
@@ -269,17 +245,30 @@ module.exports = {
       );
     }
 
-    // 🌸 activation avec angel
-    if (!body.toLowerCase().startsWith("angel")) return;
+    // 🌸 activation naturelle
+    const lower = body.toLowerCase();
 
-    const input = body.slice(5).trim();
+    if (!lower.includes("angel")) return;
 
     // juste "angel"
-    if (!input) {
+    if (lower === "angel") {
 
       return message.reply(
         frame(
           font("oui ? 🌸")
+        )
+      );
+    }
+
+    // retire "angel"
+    const input = body
+      .replace(/angel/ig, "")
+      .trim();
+
+    if (!input) {
+      return message.reply(
+        frame(
+          font("tu voulais me dire quelque chose ? 💖")
         )
       );
     }
