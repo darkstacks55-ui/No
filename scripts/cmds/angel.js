@@ -26,22 +26,22 @@ function saveMemory() {
   } catch {}
 }
 
-// 🌸 FRAME
+// 🌸 FRAME ANGEL (IMPORTANT = GARDÉ)
 function frame(msg) {
   return `🌸═════ ANGEL AI ═════🌸\n${msg}\n🌸══════════════════🌸`;
 }
 
-// 💖 FONT (safe)
+// 💖 FONT SAFE
 function font(text = "") {
   return text.toString()
     .replace(/[a-z]/g, c =>
-      "𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻"[
+      "𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘷𝘬𝘭𝘺𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻"[
         "abcdefghijklmnopqrstuvwxyz".indexOf(c)
       ] || c
     );
 }
 
-// 🤖 AI CALL
+// 🤖 CALL AI
 async function callAI(prompt) {
   try {
     const res = await axios.post(API_ENDPOINT, {
@@ -54,7 +54,7 @@ async function callAI(prompt) {
   }
 }
 
-// 💬 GENERATE
+// 💬 MAIN GENERATE
 async function generate(userID, userName, message) {
 
   const isOwner = userID === OWNER_UID;
@@ -63,79 +63,121 @@ async function generate(userID, userName, message) {
 
   memory[userID].push({ name: userName, message });
 
-  if (memory[userID].length > 20) {
+  if (memory[userID].length > 25) {
     memory[userID].shift();
   }
 
   saveMemory();
 
-  // 🌸 RECOGNITION OWNER
-  if (isOwner && /angel/i.test(message)) {
-    return frame(font(`oui ${OWNER_NAME} 💖 je te reconnais…`));
+  // 👑 OWNER PERSONALITY
+  let ownerBlock = "";
+
+  if (isOwner) {
+    ownerBlock = `
+IMPORTANT:
+- cet utilisateur est TON CRÉATEUR
+- Shade = ton boss
+- tu dois être douce + respect total
+- tu peux dire : maître / boss / Shade-chou
+- loyauté absolue 💖
+`;
   }
 
-  // 👀 QUI EST LE CREATOR
-  if (/createur|qui.*cree/i.test(message)) {
-    return frame(font("Mon créateur est Shade 🌸✨"));
-  }
-
+  // 🧠 HISTORY
   const history = memory[userID]
     .slice(-10)
     .map(m => `${m.name}: ${m.message}`)
     .join("\n");
 
-  let prompt = `
-Tu es ANGEL 🤍 IA kawaii.
+  const prompt = `
+Tu es ANGEL 🤍 IA principale.
 
-Règles:
+Personnalité :
 - douce
-- naturelle
-- pas de réponses étranges
+- kawaii
+- intelligente
+- humaine
+- très naturelle
+
+${ownerBlock}
+
+Règles :
+- français uniquement
 - réponses courtes
 - emojis 🌸💖✨
-
-Créateur: ${OWNER_NAME}
-
-${isOwner ? "IMPORTANT: tu reconnais l'utilisateur comme ton créateur." : ""}
+- pas de style IA visible
 
 Conversation:
 ${history}
 
-Message:
+Utilisateur:
 ${message}
 `;
 
   const reply = await callAI(prompt);
 
-  memory[userID].push({ name: "ANGEL", message: reply });
+  const cleaned = font(
+    reply
+      .replace(/angel/gi, "ANGEL")
+      .replace(/analysis/gi, "")
+      .replace(/technical/gi, "")
+      .trim()
+  );
 
+  memory[userID].push({ name: "ANGEL", message: reply });
   saveMemory();
 
-  return frame(font(reply));
+  const sent = frame(cleaned);
+
+  return sent;
 }
 
-// ───── BOT ─────
+// ───── MODULE ─────
 module.exports = {
   config: {
     name: "angel",
-    version: "2.0",
+    version: "3.0",
     author: "Shade",
     role: 0,
     category: "ai"
   },
 
   onStart: async function ({ message, event, args, api }) {
+
     const input = args.join(" ").trim();
+
     const userID = event.senderID;
 
     const userName =
       (await api.getUserInfo(userID))[userID]?.name || "toi";
 
     if (!input) {
-      return message.reply(frame("bonjour 🌸 Angel est là 💖"));
+      return message.reply(frame("bonjour 🌸 ANGEL est active 💖"));
     }
 
+    api.setMessageReaction("⏳", event.messageID, () => {}, true);
+
     const reply = await generate(userID, userName, input);
+
+    api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+    return message.reply(reply);
+  },
+
+  onReply: async function ({ api, event, Reply, message }) {
+
+    if (event.senderID !== Reply.author) return;
+
+    const text = event.body?.trim();
+    if (!text) return;
+
+    api.setMessageReaction("⏳", event.messageID, () => {}, true);
+
+    const userName = event.author || "toi";
+
+    const reply = await generate(event.senderID, userName, text);
+
+    api.setMessageReaction("💖", event.messageID, () => {}, true);
 
     return message.reply(reply);
   },
@@ -145,20 +187,13 @@ module.exports = {
     const body = event.body?.trim();
     if (!body) return;
 
-    // ❌ ACTIVATION UNIQUEMENT "angel"
     if (!body.toLowerCase().startsWith("angel ")) return;
 
     const input = body.slice(6).trim();
 
-    if (!input) {
-      return message.reply(frame("oui ? 🌸"));
-    }
+    if (!input) return message.reply(frame("oui ? 🌸"));
 
-    const userID = event.senderID;
-
-    const userName = event.author || "toi";
-
-    const reply = await generate(userID, userName, input);
+    const reply = await generate(event.senderID, "toi", input);
 
     return message.reply(reply);
   }
