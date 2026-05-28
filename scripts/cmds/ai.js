@@ -51,15 +51,12 @@ const resetConversation = async (api, event, message) => {
   api.setMessageReaction("♻️", event.messageID, () => {}, true);
 
   try {
-
     await axios.delete(`${CLEAR_ENDPOINT}/${event.senderID}`);
 
     return message.reply(font("memoire reset 🌸"));
 
   } catch (error) {
-
     console.error(error.message);
-
     return message.reply(font("reset failed ❌"));
   }
 };
@@ -76,7 +73,6 @@ const handleEdit = async (api, event, message, args) => {
   api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
   try {
-
     const params = { prompt };
 
     if (event.messageReply?.attachments?.[0]?.url) {
@@ -94,10 +90,7 @@ const handleEdit = async (api, event, message, args) => {
 
     const buffer = Buffer.from(base64Image, "base64");
 
-    const imagePath = path.join(
-      TMP_DIR,
-      `${Date.now()}.png`
-    );
+    const imagePath = path.join(TMP_DIR, `${Date.now()}.png`);
 
     fs.writeFileSync(imagePath, buffer);
 
@@ -109,11 +102,8 @@ const handleEdit = async (api, event, message, args) => {
     });
 
   } catch (error) {
-
     console.error(error.message);
-
     api.setMessageReaction("❌", event.messageID, () => {}, true);
-
     return message.reply(font("edit error 😿"));
   }
 };
@@ -136,14 +126,11 @@ const handleYouTube = async (api, event, message, args) => {
   const sendFile = async (url, type) => {
 
     try {
-
       const { data } = await axios.get(
         `${YT_API}?url=${encodeURIComponent(url)}&type=${type}`
       );
 
-      const downloadUrl = data.download_url;
-
-      const filePath = await downloadFile(downloadUrl, type);
+      const filePath = await downloadFile(data.download_url, type);
 
       await message.reply({
         attachment: fs.createReadStream(filePath)
@@ -152,9 +139,7 @@ const handleYouTube = async (api, event, message, args) => {
       fs.unlinkSync(filePath);
 
     } catch (error) {
-
       console.error(error.message);
-
       message.reply(font("download failed ❌"));
     }
   };
@@ -164,7 +149,6 @@ const handleYouTube = async (api, event, message, args) => {
   }
 
   try {
-
     const results = (await ytSearch(query)).videos.slice(0, 6);
 
     if (results.length === 0) {
@@ -187,9 +171,7 @@ const handleYouTube = async (api, event, message, args) => {
     });
 
   } catch (error) {
-
     console.error(error.message);
-
     message.reply(font("youtube error ❌"));
   }
 };
@@ -269,7 +251,7 @@ ${messageContent}
     let finalReply = response.data?.reply || "😿 ai bug...";
 
     finalReply = finalReply
-      .replace(/🎀\s*𝗦𝗻𝗶𝗺𝗼𝗿𝗶.*?\n/gi, "")
+      .replace(/🎀\s*𝗦𝗵𝗶𝘇𝘂.*?\n/gi, "")
       .replace(/shizu/gi, "")
       .replace(/shadow/gi, "")
       .replace(/technical/gi, "")
@@ -300,16 +282,15 @@ ${messageContent}
     api.setMessageReaction("✅", event.messageID, () => {}, true);
 
   } catch (error) {
-
     console.error(error.message);
-
     api.setMessageReaction("❌", event.messageID, () => {}, true);
-
     return message.reply(font("ai ne peut pas répondre 😿"));
   }
 };
 
+// ───── MODULE ─────
 module.exports = {
+
   config: {
     name: 'ai',
     aliases: ['girlai'],
@@ -336,12 +317,14 @@ module.exports = {
   },
 
   onReply: async function ({ api, event, Reply, message }) {
+
     if (event.senderID !== Reply.author) return;
 
     const userInput = event.body?.trim();
     if (!userInput) return;
 
     if (Reply.results && Reply.type) {
+
       const idx = parseInt(userInput);
       const list = Reply.results;
 
@@ -375,13 +358,23 @@ module.exports = {
     return await handleAIRequest(api, event, userInput, message);
   },
 
+  // ✅ ONLY FIXED PART
   onChat: async function ({ api, event, message }) {
-    const body = event.body?.trim();
-    if (!body?.toLowerCase().startsWith('ai ')) return;
 
-    const userInput = body.slice(3).trim();
-    if (!userInput) return;
+  const body = event.body?.trim();
 
-    return await handleAIRequest(api, event, userInput, message);
+  if (
+    !body?.toLowerCase().startsWith('ai ')
+  ) return;
+
+  const userInput = body.slice(3).trim();
+
+  if (!userInput) return;
+
+  return await handleAIRequest(
+    api,
+    event,
+    userInput,
+    message
+  );
   }
-};
