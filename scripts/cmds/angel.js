@@ -47,6 +47,7 @@ function font(text = "") {
     .map(c => map[c.toLowerCase()] || c)
     .join("");
 }
+
 // 🤖 CALL AI
 async function callAI(prompt) {
   try {
