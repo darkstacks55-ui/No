@@ -12,17 +12,17 @@ function toItalic(text) {
     u:"𝘶", v:"𝘷", w:"𝘸", x:"𝘹", y:"𝘺", z:"𝘻"
   };
 
-  return text.split("").map(c => map[c] || c).join("");
+  return text.split("").map(c => map[c.toLowerCase()] || c).join("");
 }
 
 module.exports = {
   config: {
     name: "help",
-    version: "7.5",
+    version: "8.0",
     author: "Shade",
     countDown: 2,
     role: 0,
-    shortDescription: { en: "Kawaii help menu" },
+    shortDescription: { en: "Angel help menu" },
     category: "info",
     guide: { en: "help" }
   },
@@ -39,30 +39,31 @@ module.exports = {
       categories[cat].push(name);
     }
 
+    // 🔥 HEADER STYLE ANGEL
     let menu = `
 ╭─ ⋆｡˚ ♡ 𝗔𝗡𝗚𝗘𝗟 𝗕𝗢𝗧 ♡ ˚｡⋆ ─╮
-🌸 Menu Commands
+📜 𝐒𝐡𝐚𝐝𝐞 𝐂𝐨𝐦𝐦𝐚𝐧𝐝 𝐋𝐢𝐬𝐭
 ⚡ Prefix : ${config.prefix || "!"}
 ╰────────────────────╯
 `;
 
     for (const cat of Object.keys(categories).sort()) {
 
-      menu += `\n┏━〔 🌷 ${cat.toUpperCase()} 〕\n`;
+      menu += `\n\n𝐂𝐚𝐭𝐞𝐠𝐨𝐫𝐲 ➤ ${cat.toUpperCase()}\n`;
 
       menu += categories[cat]
         .sort()
-        .map(c => `╎ ✧ ${toItalic(c)}`)
+        .map(c => `➤ ${toItalic(c)}`)
         .join("\n");
-
-      menu += `\n┗━━━━━━━━━━━━━━━\n`;
     }
 
     menu += `
-╭──── ♡ ANGEL INFO ♡ ────╮
-🔢 Total : ${commands.size}
-👑 Owner : SHADE
-💫 Stay cute, stay kind
+
+╭──── ♡ 𝐀𝐍𝐆𝐄𝐋 𝐈𝐍𝐅𝐎 ♡ ────╮
+🔢 Total Commands ➤ ${commands.size}
+👑 Owner ➤ SHADE
+💫 Status ➤ Online
+💖 Enjoy your experience
 ╰────────────────────╯
 `;
 
