@@ -1,66 +1,88 @@
-const a = require("axios");
-const f = require("fs");
-const p = require("path");
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
-const u = "http://65.109.80.126:20409/aryan/4k";
+const API_URL = "http://65.109.80.126:20409/aryan/4k";
 
 module.exports = {
   config: {
     name: "4k",
     aliases: ["upscale"],
-    version: "1.1",
+    version: "1.3",
     role: 0,
     author: "Shade",
-    countDown: 10,
-    longDescription: "🌸 Améliore une image en qualité 4K magique ✨",
-    category: "image",
-    guide: {
-      en: "${pn} reply to an image ✨"
-    }
+    category: "image"
   },
 
-  onStart: async function ({ message, event }) {
+  onStart: async function ({ message, event, api }) {
 
-    if (
-      !event.messageReply ||
-      !event.messageReply.attachments ||
-      !event.messageReply.attachments[0] ||
-      event.messageReply.attachments[0].type !== "photo"
-    ) {
-      return message.reply("🌸 Oops ! Réponds à une image pour la transformer en 4K ✨📸");
+    const img = event.messageReply?.attachments?.[0];
+
+    if (!img || img.type !== "photo") {
+      return message.reply("🌸 Réponds à une image !");
     }
 
-    const i = event.messageReply.attachments[0].url;
-    const t = p.join(__dirname, "cache", `angel_4k_${Date.now()}.png`);
-    let m;
+    const url = img.url;
+
+    const cacheDir = path.join(__dirname, "cache");
+    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
+
+    const filePath = path.join(cacheDir, `4k_${Date.now()}.png`);
+
+    let loading;
 
     try {
-      const r = await message.reply("🌸✨ Transformation magique en cours... patience 💫");
-      m = r.messageID;
 
-      const d = await a.get(`${u}?imageUrl=${encodeURIComponent(i)}`);
-      if (!d.data.status) throw new Error(d.data.message || "API error");
+      // ⏳ STATUS LIKE KAI / AI
+      api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
-      const x = await a.get(d.data.enhancedImageUrl, { responseType: "stream" });
-      const w = f.createWriteStream(t);
-      x.data.pipe(w);
+      loading = await message.reply("⏳ 4K processing... 🌸✨");
 
-      await new Promise((res, rej) => {
-        w.on("finish", res);
-        w.on("error", rej);
+      const res = await axios.get(
+        `${API_URL}?imageUrl=${encodeURIComponent(url)}`
+      );
+
+      if (!res.data?.enhancedImageUrl) {
+        throw new Error("API error");
+      }
+
+      const imgRes = await axios.get(res.data.enhancedImageUrl, {
+        responseType: "stream"
       });
 
-      await message.reply({
-        body: "💖✨ Yay ! Ton image est maintenant en 4K ultra kawaii 🌸",
-        attachment: f.createReadStream(t),
+      const writer = fs.createWriteStream(filePath);
+      imgRes.data.pipe(writer);
+
+      await new Promise((resolve, reject) => {
+        writer.on("finish", resolve);
+        writer.on("error", reject);
+      });
+
+      // remove loading message
+      await api.unsendMessage(loading.messageID);
+
+      // ✔️ success reaction
+      api.setMessageReaction("✔️", event.messageID, () => {}, true);
+
+      return message.reply({
+        body: "💖 4K terminé ✨",
+        attachment: fs.createReadStream(filePath)
       });
 
     } catch (e) {
-      console.error("Upscale Error:", e);
-      message.reply("💔 Oops... la magie a échoué. Réessaie plus tard 🌸");
+
+      console.error(e);
+
+      if (loading) {
+        await api.unsendMessage(loading.messageID);
+      }
+
+      api.setMessageReaction("❌", event.messageID, () => {}, true);
+
+      return message.reply("❌ 4K failed 🌸");
+
     } finally {
-      if (m) message.unsend(m);
-      if (f.existsSync(t)) f.unlinkSync(t);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
   }
 };
