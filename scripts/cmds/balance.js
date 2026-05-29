@@ -19,7 +19,7 @@ const formatMoney = (amount) => {
   return `${amount.toLocaleString()}$`;
 };
 
-// 🌸 Avatar safe
+// 🌸 Avatar safe FIX
 const fetchAvatar = async (userID) => {
   try {
     const url = `https://graph.facebook.com/${userID}/picture?width=512&height=512`;
@@ -43,18 +43,18 @@ module.exports = {
   config: {
     name: "balance",
     aliases: ["bal", "$", "cash"],
-    version: "🌸 6.0 ANGEL",
-    author: "Shade x Angel Style",
+    version: "🌸 6.1 ANGEL FIX",
+    author: "Shade x Angel",
     countDown: 3,
     role: 0,
-    description: "💖 Carte de solde style Angel kawaii + transfert",
+    description: "💖 Angel balance card FIXED",
     category: "economy",
   },
 
   onStart: async function ({ message, event, args, usersData }) {
     const { senderID, mentions, messageReply } = event;
 
-    // 💸 TRANSFERT
+    // 💸 TRANSFER FIX
     if (args[0]?.toLowerCase() === "t") {
       const targetID = Object.keys(mentions)[0] || messageReply?.senderID;
       const amount = parseInt(args.find(a => !isNaN(a)));
@@ -65,107 +65,110 @@ module.exports = {
       const sender = await usersData.get(senderID);
       const receiver = await usersData.get(targetID);
 
-      if (!receiver) return message.reply("💔 Utilisateur introuvable");
+      if (!sender || !receiver)
+        return message.reply("💔 Utilisateur introuvable");
 
       const tax = Math.ceil(amount * 0.05);
       const total = amount + tax;
 
-      if (sender.money < total)
+      const senderMoney = sender.money || 0;
+      const receiverMoney = receiver.money || 0;
+
+      if (senderMoney < total)
         return message.reply("💸 Pas assez d'argent mon ange...");
 
       await usersData.set(senderID, {
         ...sender,
-        money: sender.money - total
+        money: senderMoney - total
       });
 
       await usersData.set(targetID, {
         ...receiver,
-        money: receiver.money + amount
+        money: receiverMoney + amount
       });
-
-      const name = await usersData.getName(targetID);
 
       return message.reply(
         `🌸 ✦ Transfert Angel réussi ✦ 🌸\n\n` +
-        `💌 Vers : ${name}\n` +
+        `💌 Vers : ${receiver.name || "User"}\n` +
         `💰 Montant : ${formatMoney(amount)}\n` +
         `🍥 Taxe : ${formatMoney(tax)}\n` +
         `💎 Total : ${formatMoney(total)}`
       );
     }
 
-    // 💖 BALANCE CARD
+    // 💖 BALANCE CARD FIX
     const targetID =
       Object.keys(mentions)[0] ||
       messageReply?.senderID ||
       senderID;
 
-    const name = await usersData.getName(targetID);
-    const money = await usersData.get(targetID, "money") || 0;
+    const userData = await usersData.get(targetID);
+    if (!userData)
+      return message.reply("💔 Utilisateur introuvable");
+
+    const name = userData.name || "Unknown";
+    const money = userData.money || 0;
+
     const avatar = await fetchAvatar(targetID);
 
-    const width = 720;
-    const height = 380;
-    const canvas = createCanvas(width, height);
+    const canvas = createCanvas(720, 380);
     const ctx = canvas.getContext("2d");
 
-    // 🌈 Background angel gradient
-    const grad = ctx.createLinearGradient(0, 0, width, height);
+    // 🌈 Background
+    const grad = ctx.createLinearGradient(0, 0, 720, 380);
     grad.addColorStop(0, "#ffb6ff");
     grad.addColorStop(0.5, "#cdb4ff");
     grad.addColorStop(1, "#bde0fe");
 
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, 720, 380);
 
-    // 💖 Glass card
+    // 💖 Card
     ctx.fillStyle = "rgba(255,255,255,0.15)";
-    ctx.fillRect(30, 30, width - 60, height - 60);
+    ctx.fillRect(30, 30, 660, 320);
 
-    // ✨ border glow
-    ctx.strokeStyle = "#ffffff";
+    ctx.strokeStyle = "#fff";
     ctx.lineWidth = 3;
-    ctx.strokeRect(30, 30, width - 60, height - 60);
+    ctx.strokeRect(30, 30, 660, 320);
 
-    // 🌸 Avatar circle
-    const size = 110;
+    // 🌸 Avatar
     ctx.save();
     ctx.beginPath();
-    ctx.arc(120, 190, size / 2, 0, Math.PI * 2);
+    ctx.arc(120, 190, 55, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
-    ctx.drawImage(avatar, 65, 135, size, size);
+    ctx.drawImage(avatar, 65, 135, 110, 110);
     ctx.restore();
 
     // 💎 Title
     ctx.fillStyle = "#fff";
     ctx.font = "bold 32px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("🌸 Angel Balance Card 🌸", width / 2, 70);
+    ctx.fillText("🌸 Angel Balance Card 🌸", 360, 70);
 
     // 👤 Name
     ctx.textAlign = "left";
     ctx.font = "bold 28px Arial";
-    ctx.fillStyle = "#fff";
     ctx.fillText(`💖 ${name}`, 220, 170);
 
     // 🆔 ID
     ctx.font = "20px Arial";
-    ctx.fillStyle = "#fff";
     ctx.fillText(`🆔 ${targetID}`, 220, 210);
 
     // 💰 Money
     ctx.font = "bold 42px Arial";
-    ctx.fillStyle = "#fff";
     ctx.fillText(`💎 ${formatMoney(money)}`, 220, 280);
 
-    // save
-    const file = path.join(__dirname, "angel_balance.png");
+    // 💾 save safe
+    const tmpDir = path.join(__dirname, "tmp");
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
+
+    const file = path.join(tmpDir, `angel_balance_${targetID}.png`);
     fs.writeFileSync(file, canvas.toBuffer("image/png"));
 
     return message.reply({
-      body: `🌸💖 Voici ta carte Angel 💖🌸`,
+      body: "🌸💖 Angel Balance Card 💖🌸",
       attachment: fs.createReadStream(file)
-    });
+    }, () => fs.unlinkSync(file));
   }
 };
