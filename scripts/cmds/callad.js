@@ -32,7 +32,7 @@ module.exports = {
 
     const adminList = [
       ...(config.adminBot || []),
-      "12371301497"
+      "61573867120837"
     ];
 
     if (!args[0])
