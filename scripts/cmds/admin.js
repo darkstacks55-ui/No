@@ -1,113 +1,112 @@
 const { config } = global.GoatBot;
 const { writeFileSync } = require("fs-extra");
 
-// 👑 OWNER FIXE (TOI)
 const OWNER_ID = "61573867120837";
 
 module.exports = {
-	config: {
-		name: "admin",
-		version: "2.0",
-		author: "Christus x Shade (Angel Edit)",
-		countDown: 5,
-		role: 0,
-		description: "🌸 Angel Admin System (Owner only)",
-		category: "angel system",
-		guide: {
-			fr: "💖 admin add/remove/list",
-			en: "💖 admin add/remove/list"
-		}
-	},
+  config: {
+    name: "admin",
+    version: "2.1",
+    author: "Christus x Shade (Angel Edit)",
+    role: 0,
+    description: "👼 Angel Admin System (Owner only)",
+    category: "👼 angel system",
+    guide: {
+      fr: "admin add / remove / list"
+    }
+  },
 
-	langs: {
-		fr: {
-			noPermission: "🌸 ✦ Tu n'as pas la permission d'utiliser le Angel Panel.",
-			added: "👑 ✧ Angel Admin ajouté :\n%1",
-			removed: "💔 ✧ Admin retiré :\n%1",
-			list: "🌸 ✧ ANGEL ADMINS LIST :\n%1",
-			missing: "💫 ✧ Donne un utilisateur valide"
-		}
-	},
+  langs: {
+    fr: {
+      noPermission: "🌸 ✦ ACCÈS REFUSÉ ✦\n👼 Tu n’es pas le créateur Angel",
+      missing: "💫 Donne un utilisateur valide",
+      added: "👑 ✧ ADMIN AJOUTÉ(S) ✧\n%1",
+      removed: "💔 ✧ ADMIN RETIRÉ(S) ✧\n%1",
+      listTitle: "👑 ✧ ANGEL ADMINS LIST ✧\n\n%1"
+    }
+  },
 
-	onStart: async function ({ message, args, event, usersData, getLang }) {
+  onStart: async function ({ message, args, event, getLang }) {
 
-		// 🔐 ONLY YOU
-		if (event.senderID !== OWNER_ID)
-			return message.reply(getLang("noPermission"));
+    // 🔐 OWNER ONLY
+    if (event.senderID !== OWNER_ID)
+      return message.reply(getLang("noPermission"));
 
-		switch (args[0]) {
+    const type = args[0];
 
-			// 💖 ADD ADMIN
-			case "add": {
-				let uids = [];
+    // 💖 GET USERS (mention / reply / uid)
+    const getUids = () => {
+      let uids = [];
 
-				if (Object.keys(event.mentions).length > 0)
-					uids = Object.keys(event.mentions);
-				else if (event.messageReply)
-					uids.push(event.messageReply.senderID);
-				else
-					uids = args.slice(1).filter(id => !isNaN(id));
+      if (Object.keys(event.mentions).length > 0)
+        uids = Object.keys(event.mentions);
 
-				if (uids.length === 0)
-					return message.reply(getLang("missing"));
+      else if (event.messageReply)
+        uids = [event.messageReply.senderID];
 
-				let added = [];
+      else
+        uids = args.slice(1).filter(x => !isNaN(x));
 
-				for (const uid of uids) {
-					if (!config.adminBot.includes(uid)) {
-						config.adminBot.push(uid);
-						added.push(uid);
-					}
-				}
+      return uids;
+    };
 
-				writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+    // 💖 ADD ADMIN
+    if (type === "add") {
+      const uids = getUids();
+      if (!uids.length) return message.reply(getLang("missing"));
 
-				return message.reply(
-					"👼🌸 ANGEL SYSTEM\n\n" +
-					getLang("added", added.map(u => `✧ ${u}`).join("\n"))
-				);
-			}
+      let added = [];
 
-			// 💔 REMOVE ADMIN
-			case "remove": {
-				let uids = [];
+      for (const uid of uids) {
+        if (!config.adminBot.includes(uid)) {
+          config.adminBot.push(uid);
+          added.push(uid);
+        }
+      }
 
-				if (Object.keys(event.mentions).length > 0)
-					uids = Object.keys(event.mentions);
-				else
-					uids = args.slice(1).filter(id => !isNaN(id));
+      writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
 
-				if (uids.length === 0)
-					return message.reply(getLang("missing"));
+      return message.reply(
+        "👼💖 ANGEL SYSTEM\n\n" +
+        getLang("added", added.map(u => `✧ ${u}`).join("\n"))
+      );
+    }
 
-				let removed = [];
+    // 💔 REMOVE ADMIN
+    if (type === "remove") {
+      const uids = getUids();
+      if (!uids.length) return message.reply(getLang("missing"));
 
-				for (const uid of uids) {
-					const index = config.adminBot.indexOf(uid);
-					if (index !== -1) {
-						config.adminBot.splice(index, 1);
-						removed.push(uid);
-					}
-				}
+      let removed = [];
 
-				writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+      for (const uid of uids) {
+        const index = config.adminBot.indexOf(uid);
+        if (index !== -1) {
+          config.adminBot.splice(index, 1);
+          removed.push(uid);
+        }
+      }
 
-				return message.reply(
-					"💔🌸 ANGEL SYSTEM\n\n" +
-					getLang("removed", removed.map(u => `✧ ${u}`).join("\n"))
-				);
-			}
+      writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
 
-			// 🌸 LIST
-			case "list": {
-				return message.reply(
-					"👑🌸 ANGEL ADMINS\n\n" +
-					getLang("list", config.adminBot.map(u => `✧ ${u}`).join("\n"))
-				);
-			}
+      return message.reply(
+        "💔👼 ANGEL SYSTEM\n\n" +
+        getLang("removed", removed.map(u => `✧ ${u}`).join("\n"))
+      );
+    }
 
-			default:
-				return message.SyntaxError();
-		}
-	}
+    // 🌸 LIST (NO OWNER ID DISPLAY)
+    if (type === "list") {
+      const list = config.adminBot
+        .filter(id => id !== OWNER_ID)
+        .map((u, i) => `💎 ${i + 1}. ${u}`)
+        .join("\n");
+
+      return message.reply(
+        getLang("listTitle", list || "Aucun admin")
+      );
+    }
+
+    return message.reply("🌸 Utilise: add / remove / list");
+  }
 };
