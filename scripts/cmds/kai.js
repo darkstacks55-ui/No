@@ -183,11 +183,12 @@ ${text}
 
     let reply = res.data?.reply || "…";
 
-    // 🧹 CLEAN
+    // 🧹 CLEAN ULTRA IMPORTANT
     reply = reply
-      .replace(/shizu/gi, "KAI")
+      .replace(/🛡️.*Boss detected.*\n/gi, "")
+      .replace(/🎀.*𝗦𝗵𝗶𝘇𝘂.*\n/gi, "")
+      .replace(/shizu/gi, "")
       .replace(/snimori/gi, "KAI")
-      .replace(/aryan chauhan/gi, OWNER_NAME)
       .replace(/analysis/gi, "")
       .replace(/technical/gi, "")
       .replace(/AI language model/gi, "")
@@ -195,75 +196,35 @@ ${text}
       .replace(/openai/gi, "")
       .trim();
 
-    // 💾 SAVE BOT MEMORY
-    memory[userID].push({
-      role: "kai",
-      message: reply
-    });
-
+    memory[userID].push({ role: "kai", message: reply });
     saveMemory();
 
     reply = font(reply);
 
-    const vibes = [
-      " 😹",
-      " 🔥",
-      " 👀",
-      " 🛐",
-      ""
-    ];
+    const vibes = [" 😹", " 🔥", " 👀", " 🛐", ""];
+    const extra = vibes[Math.floor(Math.random() * vibes.length)];
 
-    const extra =
-      vibes[
-        Math.floor(Math.random() * vibes.length)
-      ];
+    let finalMsg = reply + extra + "\n\n𝗞𝗮𝗶 😹";
 
-    let finalMsg =
-      reply +
-      extra +
-      "\n\n𝗞𝗮𝗶 😹";
-
-    // 👑 OWNER STYLE
     if (isOwner) {
-      finalMsg =
-        "🛡️ Boss detected...\n\n" +
-        finalMsg;
+      finalMsg = "🛡️ Boss detected...\n\n" + finalMsg;
     }
 
     const sent = await message.reply(finalMsg);
 
-    api.setMessageReaction(
-      "🛐",
-      event.messageID,
-      () => {},
-      true
-    );
+    api.setMessageReaction("🛐", event.messageID, () => {}, true);
 
-    // 💬 REPLY SAVE
-    global.GoatBot.onReply.set(
-      sent.messageID,
-      {
-        commandName: "kai",
-        author: userID
-      }
-    );
+    global.GoatBot.onReply.set(sent.messageID, {
+      commandName: "kai",
+      author: userID
+    });
 
     return sent;
 
   } catch (error) {
-
     console.error(error);
-
-    api.setMessageReaction(
-      "❌",
-      event.messageID,
-      () => {},
-      true
-    );
-
-    return message.reply(
-      font("kai crash 😹")
-    );
+    api.setMessageReaction("❌", event.messageID, () => {}, true);
+    return message.reply(font("kai crash 😹"));
   }
 };
 
