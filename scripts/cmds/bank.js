@@ -1,595 +1,359 @@
-const axios = require("axios");
-const fs = require("fs-extra");
-
-let createCanvas, loadImage, registerFont;
-let canvasAvailable = false;
-try {
-        const canvas = require("canvas");
-        createCanvas = canvas.createCanvas;
-        loadImage = canvas.loadImage;
-        registerFont = canvas.registerFont;
-        canvasAvailable = true;
-        console.log("✅ [BANK] Canvas loaded successfully - cards will be generated");
-} catch (err) {
-        console.log("❌ [BANK] Canvas not available - using text-only cards. Error:", err.message);
-        canvasAvailable = false;
-}
-
-function generateCardNumber() {
-        const firstPart = Math.floor(1000 + Math.random() * 9000);
-        const secondPart = Math.floor(1000 + Math.random() * 9000);
-        const thirdPart = Math.floor(1000 + Math.random() * 9000);
-        const fourthPart = Math.floor(1000 + Math.random() * 9000);
-        return `${firstPart}-${secondPart}-${thirdPart}-${fourthPart}`;
-}
-
-function generateTransactionID() {
-        return `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
-}
-
-async function createBankCard(userData, balance, cardNumber, userID) {
-        if (!canvasAvailable) {
-                return null;
-        }
-
-        try {
-                const canvas = createCanvas(1000, 630);
-                const ctx = canvas.getContext("2d");
-
-                roundRect(ctx, 0, 0, 1000, 630, 30);
-                ctx.clip();
-
-                const gradient = ctx.createLinearGradient(0, 0, 1000, 630);
-                gradient.addColorStop(0, "#0f0c29");
-                gradient.addColorStop(0.5, "#302b63");
-                gradient.addColorStop(1, "#24243e");
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 1000, 630);
-
-                for (let i = 0; i < 30; i++) {
-                        const x = Math.random() * 1000;
-                        const y = Math.random() * 630;
-                        const radius = Math.random() * 100 + 50;
-                        const innerGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-                        innerGradient.addColorStop(0, `rgba(138, 43, 226, ${Math.random() * 0.15})`);
-                        innerGradient.addColorStop(1, "rgba(138, 43, 226, 0)");
-                        ctx.fillStyle = innerGradient;
-                        ctx.beginPath();
-                        ctx.arc(x, y, radius, 0, Math.PI * 2);
-                        ctx.fill();
-                }
-
-                ctx.shadowColor = "rgba(255, 215, 0, 0.5)";
-                ctx.shadowBlur = 40;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-                roundRect(ctx, 20, 20, 960, 590, 20);
-                ctx.strokeStyle = "rgba(255, 215, 0, 0.4)";
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-
-                ctx.fillStyle = "rgba(255, 215, 0, 0.15)";
-                roundRect(ctx, 50, 50, 180, 120, 15);
-                ctx.fill();
-                ctx.strokeStyle = "rgba(255, 215, 0, 0.3)";
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                ctx.fillStyle = "#FFD700";
-                roundRect(ctx, 780, 50, 170, 120, 15);
-                ctx.fill();
-
-                ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-                ctx.shadowBlur = 10;
-                ctx.fillStyle = "rgba(218, 165, 32, 0.8)";
-                roundRect(ctx, 800, 70, 130, 30, 8);
-                ctx.fill();
-                ctx.fillStyle = "rgba(218, 165, 32, 0.8)";
-                roundRect(ctx, 800, 110, 130, 30, 8);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-
-                const chipGradient = ctx.createRadialGradient(130, 110, 10, 130, 110, 50);
-                chipGradient.addColorStop(0, "#FFE55C");
-                chipGradient.addColorStop(0.5, "#FFD700");
-                chipGradient.addColorStop(1, "#B8860B");
-                ctx.fillStyle = chipGradient;
-                ctx.beginPath();
-                ctx.arc(130, 110, 50, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.strokeStyle = "#8B7500";
-                ctx.lineWidth = 3;
-                ctx.stroke();
-
-                for (let i = 0; i < 4; i++) {
-                        ctx.strokeStyle = "rgba(139, 117, 0, 0.6)";
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.arc(130, 110, 40 - i * 10, 0, Math.PI * 2);
-                        ctx.stroke();
-                }
-
-                ctx.font = "bold 48px Arial";
-                ctx.fillStyle = "#FFFFFF";
-                ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-                ctx.shadowBlur = 10;
-                ctx.fillText("GOAT PREMIUM BANK", 50, 250);
-                ctx.shadowBlur = 0;
-
-                ctx.font = "bold 42px 'Courier New'";
-                const cardParts = cardNumber.split("-");
-                const maskedCard = `****  ****  ****  ${cardParts[3]}`;
-
-                ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-                ctx.shadowBlur = 5;
-
-                const letterSpacing = 15;
-                let xPos = 50;
-                for (let i = 0; i < maskedCard.length; i++) {
-                        const char = maskedCard[i];
-                        const charGradient = ctx.createLinearGradient(xPos, 330, xPos, 380);
-                        charGradient.addColorStop(0, "#FFFFFF");
-                        charGradient.addColorStop(1, "#E0E0E0");
-                        ctx.fillStyle = charGradient;
-                        ctx.fillText(char, xPos, 360);
-                        xPos += ctx.measureText(char).width + letterSpacing;
-                }
-                ctx.shadowBlur = 0;
-                ctx.font = "20px Arial";
-                ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-                ctx.fillText("CARD HOLDER", 50, 440);
-
-                ctx.font = "bold 32px Arial";
-                ctx.fillStyle = "#FFFFFF";
-                const displayName = userData.name.toUpperCase();
-                const truncatedName = displayName.length > 25 ? displayName.substring(0, 22) + "..." : displayName;
-                ctx.fillText(truncatedName, 50, 480);
-
-                ctx.font = "20px Arial";
-                ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-                ctx.fillText("VALID THRU", 520, 440);
-                ctx.font = "bold 26px Arial";
-                ctx.fillStyle = "#FFFFFF";
-                const expiryDate = new Date();
-                expiryDate.setFullYear(expiryDate.getFullYear() + 3);
-                const month = String(expiryDate.getMonth() + 1).padStart(2, "0");
-                const year = String(expiryDate.getFullYear()).slice(-2);
-                ctx.fillText(`${month}/${year}`, 520, 480);
-
-                ctx.font = "20px Arial";
-                ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-                ctx.fillText("BALANCE", 50, 545);
-
-                ctx.font = "bold 44px Arial";
-                const balanceGradient = ctx.createLinearGradient(50, 565, 400, 565);
-                balanceGradient.addColorStop(0, "#FFD700");
-                balanceGradient.addColorStop(0.5, "#FFA500");
-                balanceGradient.addColorStop(1, "#FFD700");
-                ctx.fillStyle = balanceGradient;
-                ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
-                ctx.shadowBlur = 20;
-                ctx.fillText(`$${balance.toLocaleString()}`, 50, 590);
-                ctx.shadowBlur = 0;
-
-                ctx.font = "italic 18px Arial";
-                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-                ctx.fillText(Buffer.from("UG93ZXJlZCBieSBOZW9LRVg=", "base64").toString(), 750, 590);
-
-                const buffer = canvas.toBuffer();
-                const tempPath = `./tmp/bank_card_${Date.now()}.png`;
-                await fs.outputFile(tempPath, buffer);
-                return fs.createReadStream(tempPath);
-        } catch (error) {
-                console.error("Canvas error:", error.message);
-                throw error;
-        }
-}
-
-function roundRect(ctx, x, y, width, height, radius) {
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.lineTo(x + width - radius, y);
-        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-        ctx.lineTo(x + width, y + height - radius);
-        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-        ctx.lineTo(x + radius, y + height);
-        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-        ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.closePath();
-}
-
 module.exports = {
-        config: {
-                name: "bank",
-                version: "3.0.0",
-                author: "Christus",
-                countDown: 10,
-                role: 0,
-                description: {
-                        vi: "Hệ thống ngân hàng cao cấp với thẻ, chuyển khoản, vay",
-                        en: "Premium banking system with cards, transfers, loans"
-                },
-                category: "economy",
-                guide: {
-                        en: "   {pn} register - Register for a premium bank account"
-                                + "\n   {pn} balance | bal - View your premium bank card with balance"
-                                + "\n   {pn} transfer <@tag|userID> <amount> - Transfer money to another user"
-                                + "\n   {pn} deposit <amount> - Deposit money from wallet to bank"
-                                + "\n   {pn} withdraw <amount> - Withdraw money from bank to wallet"
-                                + "\n   {pn} loan <amount> - Take a loan (max 5000, 10% interest)"
-                                + "\n   {pn} payloan <amount> - Pay back your loan"
-                                + "\n   {pn} transactions | history - View your transaction history"
-                                + "\n   {pn} card - View your premium bank card details"
-                }
-        },
+  config: {
+    name: "bank",
+    aliases: ["balbank"],
+    version: "1.0",
+    author: "Shade ✕ Angel",
+    countDown: 5,
+    role: 0,
+    description: {
+      en: "Angel Banking System"
+    },
+    category: "economy"
+  },
 
-        langs: {
-                en: {
-                        notRegistered: "❌ You don't have a bank account! Use {pn} register to create one.",
-                        registered: "✅ Bank account created successfully!\n💳 Card Number: %1\n💰 Initial Balance: $0\n\nUse {pn} balance to view your premium card!",
-                        alreadyRegistered: "❌ You already have a bank account!\n💳 Card Number: %1",
-                        invalidAmount: "❌ Please enter a valid amount!",
-                        insufficientBank: "❌ Insufficient bank balance! Your balance: $%1",
-                        insufficientWallet: "❌ Insufficient wallet balance! Your balance: $%1",
-                        depositSuccess: "✅ Successfully deposited $%1 to your bank account!\n💳 Transaction ID: %2\n💰 New Bank Balance: $%3",
-                        withdrawSuccess: "✅ Successfully withdrew $%1 from your bank account!\n💳 Transaction ID: %2\n💰 New Bank Balance: $%3",
-                        transferSuccess: "✅ Successfully transferred $%1 to %2!\n💳 Transaction ID: %3\n💰 Your New Balance: $%4",
-                        transferReceived: "💰 You received $%1 from %2!\n💳 Transaction ID: %3",
-                        cannotTransferSelf: "❌ You cannot transfer money to yourself!",
-                        targetNotRegistered: "❌ Target user doesn't have a bank account!",
-                        loanTaken: "✅ Loan approved!\n💵 Amount: $%1\n📈 Interest (10%%): $%2\n💰 Total to repay: $%3\n💳 Transaction ID: %4",
-                        loanExists: "❌ You already have an active loan of $%1!\nPay it back first using {pn} payloan",
-                        loanPaid: "✅ Loan payment successful!\n💵 Paid: $%1\n💰 Remaining: $%2",
-                        noLoan: "✅ You don't have any active loans!",
-                        noTransactions: "📋 No transaction history found.",
-                        transactionHistory: "📋 Transaction History (Last 10):\n\n%1",
-                        noTarget: "❌ Please mention or provide user ID to transfer!",
-                        maxLoan: "❌ Maximum loan amount is $5000!"
-                }
-        },
-        onStart: async function ({ args, message, event, usersData, getLang, commandName }) {
-                const { senderID, threadID } = event;
-                const userData = await usersData.get(senderID);
+  onStart: async function ({ message, event, args, usersData }) {
+    const { senderID, mentions } = event;
 
-                if (!userData.data.bank) {
-                        userData.data.bank = {
-                                cardNumber: null,
-                                balance: 0,
-                                transactions: [],
-                                loan: 0
-                        };
-                }
+    let userData = await usersData.get(senderID);
 
-                const action = args[0]?.toLowerCase();
+    if (!userData.data)
+      userData.data = {};
 
-                switch (action) {
-                        case "register": {
-                                if (userData.data.bank.cardNumber) {
-                                        return message.reply(getLang("alreadyRegistered", userData.data.bank.cardNumber));
-                                }
-                                const cardNumber = generateCardNumber();
-                                userData.data.bank.cardNumber = cardNumber;
-                                userData.data.bank.balance = 0;
-                                userData.data.bank.transactions = [];
-                                userData.data.bank.loan = 0;
-                                await usersData.set(senderID, userData.data, "data");
-                                return message.reply(getLang("registered", cardNumber));
-                        }
+    if (!userData.data.bank) {
+      userData.data.bank = {
+        wallet: userData.money || 0,
+        bank: 0,
+        savings: 0,
+        vault: 0,
+        loan: 0,
+        streak: 1,
+        premium: false,
+        gambling: 0,
+        trading: 1,
+        investing: 2,
+        business: 2,
+        achievements: 2,
+        lastDaily: 0,
+        lastWork: 0,
+        history: []
+      };
 
-                        case "balance":
-                        case "bal": {
-                                if (!userData.data.bank.cardNumber) {
-                                        return message.reply(getLang("notRegistered").replace("{pn}", global.utils.getPrefix(threadID) + commandName));
-                                }
+      await usersData.set(senderID, userData.data, "data");
+    }
 
-                                const maskedCard = userData.data.bank.cardNumber.replace(/(\d{4})-(\d{4})-(\d{4})-(\d{4})/, "****-****-****-$4");
-                                const cardText = `╔══════════════════════════════╗
-║     💎 PREMIUM BANK CARD 💎    ║
-╠══════════════════════════════╣
-║                              ║
-║  Card Number:                ║
-║  ${maskedCard}          ║
-║                              ║
-║  Card Holder:                ║
-║  ${userData.name.toUpperCase().padEnd(26)}  ║
-║                              ║
-║  Balance: $${userData.data.bank.balance.toLocaleString().padEnd(18)} ║
-║                              ║
-${userData.data.bank.loan > 0 ? `║  ⚠️ Loan: $${userData.data.bank.loan.toLocaleString().padEnd(18)} ║\n║                              ║\n` : ''}╠══════════════════════════════╣
-║         GOAT BANK V3         ║
-╚══════════════════════════════╝`;
+    const bankData = userData.data.bank;
 
-                                try {
-        console.log("[BANK] Creating bank card for user:", senderID);
+    const formatMoney = (amount) => {
+      return Number(amount).toLocaleString();
+    };
 
-        const buffer = await createBankCard(
-                userData,
-                userData.data.bank.balance,
-                userData.data.bank.cardNumber,
-                senderID
+    const addHistory = async (text) => {
+      bankData.history.unshift(text);
+
+      if (bankData.history.length > 10)
+        bankData.history.pop();
+
+      await usersData.set(senderID, userData.data, "data");
+    };
+
+    const action = (args[0] || "").toLowerCase();
+
+    switch (action) {
+
+      // ================= HELP =================
+
+      case "help": {
+        return message.reply(`🏦 ❲ 𝗕𝗮𝗻𝗸𝗶𝗻𝗴 𝗦𝘆𝘀𝘁𝗲𝗺 ❳ 🏦
+━━━━━━━━━━━━━━━
+🏦 𝗕𝗔𝗡𝗞𝗜𝗡𝗚 𝗦𝗬𝗦𝗧𝗘𝗠
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 𝗕𝗔𝗦𝗜𝗖 𝗕𝗔𝗡𝗞𝗜𝗡𝗚
+• bank balance — Financial dashboard
+• bank deposit <amount>
+• bank withdraw <amount>
+• bank transfer @user <amount>
+• bank loan <amount>
+• bank repay <amount>
+• bank history
+• bank daily
+• bank work
+
+📈 𝗜𝗡𝗩𝗘𝗦𝗧𝗠𝗘𝗡𝗧𝗦
+• bank stocks
+• bank crypto
+• bank market
+
+🎰 𝗚𝗔𝗠𝗘𝗦
+• bank gamble <amount>
+• bank slots <amount>
+
+⭐ 𝗣𝗥𝗘𝗠𝗜𝗨𝗠
+• bank premium
+• bank leaderboard
+━━━━━━━━ ✕ ━━━━━━━━`);
+      }
+
+      // ================= DASHBOARD =================
+
+      case "":
+      case "balance":
+      case "bal": {
+
+        const totalLiquid =
+          bankData.wallet +
+          bankData.bank +
+          bankData.savings +
+          bankData.vault;
+
+        const totalAssets =
+          5000000 +
+          50000000 +
+          100000000;
+
+        const netWorth = totalLiquid + totalAssets;
+
+        return message.reply(
+`🏦 ❲ 𝗕𝗮𝗻𝗸𝗶𝗻𝗴 𝗦𝘆𝘀𝘁𝗲𝗺 ❳ 🏦
+━━━━━━━━━━━━━━━
+💳 𝗙𝗜𝗡𝗔𝗡𝗖𝗜𝗔𝗟 𝗗𝗔𝗦𝗛𝗕𝗢𝗔𝗥𝗗 👑
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💎 𝗕𝗶𝗹𝗹𝗶𝗼𝗻𝗮𝗶𝗿𝗲 · Level 1 · ${bankData.premium ? "Premium" : "Free"}
+
+💰 𝗟𝗜𝗤𝗨𝗜𝗗 𝗔𝗦𝗦𝗘𝗧𝗦
+💵 Wallet: $${formatMoney(bankData.wallet)}
+🏦 Bank: $${formatMoney(bankData.bank)}
+🏛️ Savings: $${formatMoney(bankData.savings)}
+🔐 Vault: $${formatMoney(bankData.vault)}
+└ Total Liquid: $${formatMoney(totalLiquid)}
+
+📊 𝗔𝗦𝗦𝗘𝗧 𝗣𝗢𝗥𝗧𝗙𝗢𝗟𝗜𝗢
+📈 Investments: $21,640
+🏠 Real Estate: $5,000,000
+🏢 Businesses: $50,000,000
+🚗 Vehicles: $3,300,000
+💎 Luxury: $100,000,000
+└ Total Assets: $${formatMoney(totalAssets)}
+
+🏆 𝗪𝗘𝗔𝗟𝗧𝗛 𝗦𝗨𝗠𝗠𝗔𝗥𝗬
+💎 Net Worth: $${formatMoney(netWorth)}
+🟢 Credit: 750/850
+🎯 Max Loan: $750,000
+⚡ Multiplier: ${bankData.premium ? "2x" : "1x"}
+
+📈 𝗦𝗧𝗔𝗧𝗦
+🔥 Streak: ${bankData.streak} days
+🏆 Achievements: ${bankData.achievements}
+💸 Active Loan: ${bankData.loan > 0 ? "$" + formatMoney(bankData.loan) : "None ✅"}
+🎰 Gambling: ${bankData.gambling}
+📊 Trading: ${bankData.trading}
+🏢 Business: ${bankData.business}
+📈 Investing: ${bankData.investing}
+━━━━━━━ ✕ ━━━━━━`
         );
+      }
 
-        console.log("[BANK] Card created:", !!buffer);
+      // ================= DEPOSIT =================
 
-        const cardText = `💳 PREMIUM BANK CARD\n💰 Balance: $${userData.data.bank.balance.toLocaleString()}`;
+      case "deposit": {
+        const amount = parseInt(args[1]);
 
-        if (!buffer) {
-                console.log("[BANK] Canvas failed → fallback text");
-                return message.reply(cardText);
+        if (!amount || amount <= 0)
+          return message.reply("❌ Invalid amount");
+
+        if (bankData.wallet < amount)
+          return message.reply("❌ Not enough wallet money");
+
+        bankData.wallet -= amount;
+        bankData.bank += amount;
+
+        await usersData.set(senderID, userData.data, "data");
+
+        await addHistory(`➕ Deposited $${formatMoney(amount)}`);
+
+        return message.reply(`✅ Deposited $${formatMoney(amount)} to your bank.`);
+      }
+
+      // ================= WITHDRAW =================
+
+      case "withdraw": {
+        const amount = parseInt(args[1]);
+
+        if (!amount || amount <= 0)
+          return message.reply("❌ Invalid amount");
+
+        if (bankData.bank < amount)
+          return message.reply("❌ Not enough bank balance");
+
+        bankData.bank -= amount;
+        bankData.wallet += amount;
+
+        await usersData.set(senderID, userData.data, "data");
+
+        await addHistory(`➖ Withdraw $${formatMoney(amount)}`);
+
+        return message.reply(`✅ Withdrawn $${formatMoney(amount)} from your bank.`);
+      }
+
+      // ================= TRANSFER =================
+
+      case "transfer": {
+        const targetID = Object.keys(mentions)[0];
+        const amount = parseInt(args[2]);
+
+        if (!targetID)
+          return message.reply("❌ Mention a user");
+
+        if (!amount || amount <= 0)
+          return message.reply("❌ Invalid amount");
+
+        if (bankData.bank < amount)
+          return message.reply("❌ Not enough money in bank");
+
+        let targetData = await usersData.get(targetID);
+
+        if (!targetData.data)
+          targetData.data = {};
+
+        if (!targetData.data.bank) {
+          targetData.data.bank = {
+            wallet: targetData.money || 0,
+            bank: 0,
+            savings: 0,
+            vault: 0,
+            loan: 0,
+            streak: 1,
+            premium: false,
+            gambling: 0,
+            trading: 1,
+            investing: 1,
+            business: 1,
+            achievements: 1,
+            lastDaily: 0,
+            lastWork: 0,
+            history: []
+          };
         }
 
-        const path = require("path");
-        const tempPath = path.join(__dirname, "tmp", `bank_${Date.now()}.png`);
+        bankData.bank -= amount;
+        targetData.data.bank.bank += amount;
 
-        await fs.outputFile(tempPath, buffer);
+        await usersData.set(senderID, userData.data, "data");
+        await usersData.set(targetID, targetData.data, "data");
 
-        return message.reply({
-                attachment: fs.createReadStream(tempPath),
-                body: "🏦 ANGEL BANK °ʚ🎀ɞ° - Premium Card"
-        }).then(() => {
-                fs.unlink(tempPath).catch(() => {});
-        });
+        return message.reply(`💸 Sent $${formatMoney(amount)} successfully.`);
+      }
 
-} catch (err) {
-        console.error("Bank card generation error:", err);
-        return message.reply("❌ Bank system error. Try again later.");
-                                }
-                                } catch (err) {
-                                        console.error("Bank card generation error:", err);
-                                }
-                                console.log("[BANK] Sending text-only response");
-                                return message.reply(cardText);
-                        }
+      // ================= DAILY =================
 
-                        case "deposit": {
-                                if (!userData.data.bank.cardNumber) {
-                                        return message.reply(getLang("notRegistered").replace("{pn}", global.utils.getPrefix(threadID) + commandName));
-                                }
-                                const amount = parseInt(args[1]);
-                                if (isNaN(amount) || amount <= 0) {
-                                        return message.reply(getLang("invalidAmount"));
-                                }
-                                if (userData.money < amount) {
-                                        return message.reply(getLang("insufficientWallet", userData.money.toLocaleString()));
-                                }
-                                userData.money -= amount;
-                                userData.data.bank.balance += amount;
-                                const txnID = generateTransactionID();
-                                userData.data.bank.transactions.unshift({
-                                        type: "deposit",
-                                        amount: amount,
-                                        txnID: txnID,
-                                        date: new Date().toISOString()
-                                });
-                                if (userData.data.bank.transactions.length > 50) {
-                                        userData.data.bank.transactions = userData.data.bank.transactions.slice(0, 50);
-                                }
-                                await usersData.set(senderID, {
-                                        money: userData.money,
-                                        data: userData.data
-                                });
-                                return message.reply(getLang("depositSuccess", amount.toLocaleString(), txnID, userData.data.bank.balance.toLocaleString()));
-                        }
-                        case "withdraw": {
-                                if (!userData.data.bank.cardNumber) {
-                                        return message.reply(getLang("notRegistered").replace("{pn}", global.utils.getPrefix(threadID) + commandName));
-                                }
-                                const amount = parseInt(args[1]);
-                                if (isNaN(amount) || amount <= 0) {
-                                        return message.reply(getLang("invalidAmount"));
-                                }
-                                if (userData.data.bank.balance < amount) {
-                                        return message.reply(getLang("insufficientBank", userData.data.bank.balance.toLocaleString()));
-                                }
-                                userData.money += amount;
-                                userData.data.bank.balance -= amount;
-                                const txnID = generateTransactionID();
-                                userData.data.bank.transactions.unshift({
-                                        type: "withdrawal",
-                                        amount: amount,
-                                        txnID: txnID,
-                                        date: new Date().toISOString()
-                                });
-                                if (userData.data.bank.transactions.length > 50) {
-                                        userData.data.bank.transactions = userData.data.bank.transactions.slice(0, 50);
-                                }
-                                await usersData.set(senderID, {
-                                        money: userData.money,
-                                        data: userData.data
-                                });
-                                return message.reply(getLang("withdrawSuccess", amount.toLocaleString(), txnID, userData.data.bank.balance.toLocaleString()));
-                        }
+      case "daily": {
+        const now = Date.now();
 
-                        case "transfer": {
-                                if (!userData.data.bank.cardNumber) {
-                                        return message.reply(getLang("notRegistered").replace("{pn}", global.utils.getPrefix(threadID) + commandName));
-                                }
-                                let targetID = Object.keys(event.mentions)[0];
-                                let amountArg;
-                                if (targetID) {
-                                        amountArg = args[1];
-                                } else if (args[1]) {
-                                        targetID = args[1];
-                                        amountArg = args[2];
-                                }
-                                if (!targetID) {
-                                        return message.reply(getLang("noTarget"));
-                                }
-                                if (targetID == senderID) {
-                                        return message.reply(getLang("cannotTransferSelf"));
-                                }
-                                if (!amountArg) {
-                                        return message.reply("❌ Please provide an amount to transfer!\n\nUsage:\n• " + global.utils.getPrefix(threadID) + "bank transfer @user <amount>\n• " + global.utils.getPrefix(threadID) + "bank transfer <userID> <amount>");
-                                }
-                                const amount = parseInt(amountArg);
-                                if (isNaN(amount) || amount <= 0) {
-                                        return message.reply(`❌ Invalid amount: "${amountArg}"\nPlease enter a valid number greater than 0.\n\nExample: ${global.utils.getPrefix(threadID)}bank transfer @user 1000`);
-                                }
-                                if (userData.data.bank.balance < amount) {
-                                        return message.reply(getLang("insufficientBank", userData.data.bank.balance.toLocaleString()));
-                                }
-                                const targetData = await usersData.get(targetID);
-                                if (!targetData.data.bank?.cardNumber) {
-                                        return message.reply(getLang("targetNotRegistered"));
-                                }
-                                userData.data.bank.balance -= amount;
-                                targetData.data.bank.balance += amount;
-                                const txnID = generateTransactionID();
-                                userData.data.bank.transactions.unshift({
-                                        type: "transfer_sent",
-                                        amount: amount,
-                                        to: targetData.name,
-                                        toID: targetID,
-                                        txnID: txnID,
-                                        date: new Date().toISOString()
-                                });
-                                targetData.data.bank.transactions.unshift({
-                                        type: "transfer_received",
-                                        amount: amount,
-                                        from: userData.name,
-                                        fromID: senderID,
-                                        txnID: txnID,
-                                        date: new Date().toISOString()
-                                });
-                                if (userData.data.bank.transactions.length > 50) {
-                                        userData.data.bank.transactions = userData.data.bank.transactions.slice(0, 50);
-                                }
-                                if (targetData.data.bank.transactions.length > 50) {
-                                        targetData.data.bank.transactions = targetData.data.bank.transactions.slice(0, 50);
-                                }
-                                await usersData.set(senderID, userData.data, "data");
-                                await usersData.set(targetID, targetData.data, "data");
-                                message.reply(getLang("transferSuccess", amount.toLocaleString(), targetData.name, txnID, userData.data.bank.balance.toLocaleString()));
-                                global.GoatBot.onReply.set(message.messageID, {
-                                        commandName,
-                                        messageID: message.messageID,
-                                        author: targetID,
-                                        txnID: txnID,
-                                        amount: amount,
-                                        from: userData.name
-                                });
-                                return;
-                        }
-
-                        case "loan": {
-                                if (!userData.data.bank.cardNumber) {
-                                        return message.reply(getLang("notRegistered").replace("{pn}", global.utils.getPrefix(threadID) + commandName));
-                                }
-                                if (userData.data.bank.loan > 0) {
-                                        return message.reply(getLang("loanExists", userData.data.bank.loan.toLocaleString()).replace("{pn}", global.utils.getPrefix(threadID) + commandName));
-                                }
-                                const amount = parseInt(args[1]);
-                                if (isNaN(amount) || amount <= 0) {
-                                        return message.reply(getLang("invalidAmount"));
-                                }
-                                if (amount > 5000) {
-                                        return message.reply(getLang("maxLoan"));
-                                }
-                                const interest = Math.floor(amount * 0.1);
-                                const totalLoan = amount + interest;
-                                userData.data.bank.balance += amount;
-                                userData.data.bank.loan = totalLoan;
-                                const txnID = generateTransactionID();
-                                userData.data.bank.transactions.unshift({
-                                        type: "loan",
-                                        amount: amount,
-                                        interest: interest,
-                                        total: totalLoan,
-                                        txnID: txnID,
-                                        date: new Date().toISOString()
-                                });
-                                if (userData.data.bank.transactions.length > 50) {
-                                        userData.data.bank.transactions = userData.data.bank.transactions.slice(0, 50);
-                                }
-                                await usersData.set(senderID, userData.data, "data");
-                                return message.reply(getLang("loanTaken", amount.toLocaleString(), interest.toLocaleString(), totalLoan.toLocaleString(), txnID));
-                        }
-
-                        case "payloan": {
-                                if (!userData.data.bank.cardNumber) {
-                                        return message.reply(getLang("notRegistered").replace("{pn}", global.utils.getPrefix(threadID) + commandName));
-                                }
-                                if (userData.data.bank.loan <= 0) {
-                                        return message.reply(getLang("noLoan"));
-                                }
-                                const amount = parseInt(args[1]);
-                                if (isNaN(amount) || amount <= 0) {
-                                        return message.reply(getLang("invalidAmount"));
-                                }
-                                if (userData.data.bank.balance < amount) {
-                                        return message.reply(getLang("insufficientBank", userData.data.bank.balance.toLocaleString()));
-                                }
-                                const payAmount = Math.min(amount, userData.data.bank.loan);
-                                userData.data.bank.balance -= payAmount;
-                                userData.data.bank.loan -= payAmount;
-                                const txnID = generateTransactionID();
-                                userData.data.bank.transactions.unshift({
-                                        type: "loan_payment",
-                                        amount: payAmount,
-                                        txnID: txnID,
-                                        date: new Date().toISOString()
-                                });
-                                if (userData.data.bank.transactions.length > 50) {
-                                        userData.data.bank.transactions = userData.data.bank.transactions.slice(0, 50);
-                                }
-                                await usersData.set(senderID, userData.data, "data");
-                                return message.reply(getLang("loanPaid", payAmount.toLocaleString(), userData.data.bank.loan.toLocaleString()));
-                        }
-
-                        case "transactions":
-                        case "history": {
-                                if (!userData.data.bank.cardNumber) {
-                                        return message.reply(getLang("notRegistered").replace("{pn}", global.utils.getPrefix(threadID) + commandName));
-                                }
-                                if (!userData.data.bank.transactions || userData.data.bank.transactions.length === 0) {
-                                        return message.reply(getLang("noTransactions"));
-                                }
-                                let historyText = "";
-                                const transactions = userData.data.bank.transactions.slice(0, 10);
-                                transactions.forEach((txn, index) => {
-                                        const date = new Date(txn.date).toLocaleString();
-                                        const icon = {
-                                                deposit: "📥",
-                                                withdrawal: "📤",
-                                                transfer_sent: "➡️",
-                                                transfer_received: "⬅️",
-                                                loan: "💵",
-                                                loan_payment: "💸"
-                                        }[txn.type] || "💳";
-                                        historyText += `${index + 1}. ${icon} ${txn.type.toUpperCase().replace(/_/g, " ")}\n`;
-                                        historyText += `   💰 Amount: $${txn.amount.toLocaleString()}\n`;
-                                        if (txn.to) historyText += `   👤 To: ${txn.to}\n`;
-                                        if (txn.from) historyText += `   👤 From: ${txn.from}\n`;
-                                        historyText += `   🆔 ID: ${txn.txnID}\n`;
-                                        historyText += `   📅 ${date}\n\n`;
-                                });
-                                return message.reply(getLang("transactionHistory", historyText));
-                        }
-                        case "card": {
-                                if (!userData.data.bank.cardNumber) {
-                                        return message.reply(getLang("notRegistered").replace("{pn}", global.utils.getPrefix(threadID) + commandName));
-                                }
-                                return message.reply(`💳 Premium Bank Card Details\n\n👤 Card Holder: ${userData.name}\n🔢 Card Number: ${userData.data.bank.cardNumber}\n💰 Balance: $${userData.data.bank.balance.toLocaleString()}\n📊 Total Transactions: ${userData.data.bank.transactions.length}\n${userData.data.bank.loan > 0 ? `⚠️ Active Loan: $${userData.data.bank.loan.toLocaleString()}` : "✅ No Active Loans"}`);
-                        }
-
-                        default: {
-                                const prefix = global.utils.getPrefix(threadID);
-                                return message.reply(`🏦 𝐀𝐍𝐆𝐄𝐋 𝐁𝐀𝐍𝐊 °ʚ🎀ɞ° - Premium Banking System\n\n` +
-                                        `📋 Available Commands:\n\n` +
-                                        `${prefix}${commandName} register - Create account\n` +
-                                        `${prefix}${commandName} balance - View card\n` +
-                                        `${prefix}${commandName} deposit <amount> - Deposit money\n` +
-                                        `${prefix}${commandName} withdraw <amount> - Withdraw money\n` +
-                                        `${prefix}${commandName} transfer <@user> <amount> - Transfer\n` +
-                                        `${prefix}${commandName} loan <amount> - Take loan (max $5000)\n` +
-                                        `${prefix}${commandName} payloan <amount> - Pay loan\n` +
-                                        `${prefix}${commandName} transactions - View history\n` +
-                                        `${prefix}${commandName} card - View card details\n\n` +
-                                        `💎 Premium users (2000+ money) get exclusive benefits!`);
-                        }
-                }
+        if (now - bankData.lastDaily < 86400000) {
+          const left = Math.floor((86400000 - (now - bankData.lastDaily)) / 3600000);
+          return message.reply(`⏳ Come back in ${left}h`);
         }
+
+        const reward = 5000;
+
+        bankData.wallet += reward;
+        bankData.lastDaily = now;
+
+        await usersData.set(senderID, userData.data, "data");
+
+        await addHistory(`🎁 Daily reward $${formatMoney(reward)}`);
+
+        return message.reply(`🎁 You received $${formatMoney(reward)}`);
+      }
+
+      // ================= WORK =================
+
+      case "work": {
+        const now = Date.now();
+
+        if (now - bankData.lastWork < 14400000) {
+          const left = Math.floor((14400000 - (now - bankData.lastWork)) / 3600000);
+          return message.reply(`⏳ Work cooldown: ${left}h`);
+        }
+
+        const reward = Math.floor(Math.random() * 9000) + 1000;
+
+        bankData.wallet += reward;
+        bankData.lastWork = now;
+
+        await usersData.set(senderID, userData.data, "data");
+
+        await addHistory(`💼 Worked and earned $${formatMoney(reward)}`);
+
+        return message.reply(`💼 You worked and earned $${formatMoney(reward)}`);
+      }
+
+      // ================= LOAN =================
+
+      case "loan": {
+        const amount = parseInt(args[1]);
+
+        if (!amount || amount <= 0)
+          return message.reply("❌ Invalid amount");
+
+        if (bankData.loan > 0)
+          return message.reply("❌ Repay your current loan first");
+
+        const total = Math.floor(amount * 1.1);
+
+        bankData.bank += amount;
+        bankData.loan = total;
+
+        await usersData.set(senderID, userData.data, "data");
+
+        return message.reply(
+`🏦 Loan approved
+💰 Received: $${formatMoney(amount)}
+📈 Repay: $${formatMoney(total)}`
+        );
+      }
+
+      // ================= REPAY =================
+
+      case "repay": {
+        const amount = parseInt(args[1]);
+
+        if (!amount || amount <= 0)
+          return message.reply("❌ Invalid amount");
+
+        if (bankData.loan <= 0)
+          return message.reply("✅ No active loan");
+
+        if (bankData.bank < amount)
+          return message.reply("❌ Not enough bank money");
+
+        bankData.bank -= amount;
+        bankData.loan -= amount;
+
+        if (bankData.loan < 0)
+          bankData.loan = 0;
+
+        await usersData.set(senderID, userData.data, "data");
+
+        return message.reply(`✅ Loan repaid: $${formatMoney(amount)}`);
+      }
+
+      // ================= HISTORY =================
+
+      case "history": {
+        if (bankData.history.length <= 0)
+          return message.reply("📜 No transaction history.");
+
+        return message.reply(
+`📜 BANK HISTORY
+━━━━━━━━━━━━━━
+${bankData.history.join("\n")}`
+        );
+      }
+
+      default:
+        return message.reply("❌ Unknown banking command\nUse: bank help");
+    }
+  }
 };
