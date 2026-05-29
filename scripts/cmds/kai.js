@@ -206,8 +206,8 @@ ${text}
 
     let finalMsg = reply + extra + "\n\n𝗞𝗮𝗶 😹";
 
-    if (isOwner) {
-      finalMsg = "🛡️ Boss detected...\n\n" + finalMsg;
+    if (isOwner && !finalMsg.includes("Boss detected")) {
+  finalMsg = "👑 Boss detected...\n\n" + finalMsg;
     }
 
     const sent = await message.reply(finalMsg);
