@@ -11,16 +11,40 @@ const YT_API = "http://65.109.80.126:20409/aryan/yx";
 const EDIT_API = "https://gemini-edit-omega.vercel.app/edit";
 
 const OWNER_UID = "61573867120837";
+const OWNER_NAME = "Shade";
 
 const TMP_DIR = path.join(__dirname, 'tmp');
 if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR);
 
+// 🧠 MEMORY
+const memoryFile = "./kai_memory.json";
+
+let memory = {};
+
+if (fs.existsSync(memoryFile)) {
+  try {
+    memory = JSON.parse(fs.readFileSync(memoryFile, "utf8"));
+  } catch {
+    memory = {};
+  }
+}
+
+function saveMemory() {
+  try {
+    fs.writeFileSync(memoryFile, JSON.stringify(memory, null, 2));
+  } catch {}
+}
+
 // 💖 FONT
-function font(text) {
+function font(text = "") {
+
   const map = {
-    a:"𝘢",b:"𝘣",c:"𝘤",d:"𝘥",e:"𝘦",f:"𝘧",g:"𝘨",h:"𝘩",i:"𝘪",
-    j:"𝘫",k:"𝘬",l:"𝘭",m:"𝘮",n:"𝘯",o:"𝘰",p:"𝘱",q:"𝘲",r:"𝘳",
-    s:"𝘴",t:"𝘵",u:"𝘶",v:"𝘷",w:"𝘸",x:"𝘹",y:"𝘺",z:"𝘻"
+    a:"𝘢",b:"𝘣",c:"𝘤",d:"𝘥",e:"𝘦",
+    f:"𝘧",g:"𝘨",h:"𝘩",i:"𝘪",j:"𝘫",
+    k:"𝘬",l:"𝘭",m:"𝘮",n:"𝘯",o:"𝘰",
+    p:"𝘱",q:"𝘲",r:"𝘳",s:"𝘴",t:"𝘵",
+    u:"𝘶",v:"𝘷",w:"𝘸",x:"𝘹",y:"𝘺",
+    z:"𝘻"
   };
 
   return String(text)
@@ -31,145 +55,337 @@ function font(text) {
 
 // 📥 DOWNLOAD
 const downloadFile = async (url, ext) => {
-  const filePath = path.join(TMP_DIR, `${uuidv4()}.${ext}`);
-  const response = await axios.get(url, { responseType: 'arraybuffer' });
-  fs.writeFileSync(filePath, Buffer.from(response.data));
+
+  const filePath = path.join(
+    TMP_DIR,
+    `${uuidv4()}.${ext}`
+  );
+
+  const response = await axios.get(url, {
+    responseType: 'arraybuffer'
+  });
+
+  fs.writeFileSync(
+    filePath,
+    Buffer.from(response.data)
+  );
+
   return filePath;
 };
 
-// 🤖 KAI AI ULTIMATE
-const handleAIRequest = async (api, event, text, message) => {
+// 🤖 MAIN AI
+const handleAIRequest = async (
+  api,
+  event,
+  text,
+  message
+) => {
+
   try {
 
-    api.setMessageReaction("⏳", event.messageID, () => {}, true);
+    api.setMessageReaction(
+      "⏳",
+      event.messageID,
+      () => {},
+      true
+    );
 
-    const isOwner = event.senderID === OWNER_UID;
+    const userID = event.senderID;
 
+    const isOwner = userID === OWNER_UID;
+
+    // 🧠 MEMORY CREATE
+    if (!memory[userID]) {
+      memory[userID] = [];
+    }
+
+    memory[userID].push({
+      role: "user",
+      message: text
+    });
+
+    if (memory[userID].length > 30) {
+      memory[userID].shift();
+    }
+
+    saveMemory();
+
+    // 🧠 HISTORY
+    const history = memory[userID]
+      .slice(-12)
+      .map(m => `${m.role}: ${m.message}`)
+      .join("\n");
+
+    // 👑 OWNER MODE
     let personality = "";
 
     if (isOwner) {
-      personality = `
-IMPORTANT:
-- cet utilisateur est TON CRÉATEUR
-- respect absolu
-- appelle-le : boss / Shade / créateur
-- sois loyal + sérieux avec lui
-- jamais insolent avec lui
-`;
-    } else {
-      personality = `
-Tu es KAI 😹
 
-- garçon
-- troll intelligent
-- gamer
-- drôle
-- un peu arrogant
-- esprit compétition
+      personality = `
+IMPORTANT ABSOLU :
+
+- cet utilisateur est TON CREATEUR
+- son vrai nom est Shade
+- tu reconnais Shade immédiatement
+- tu ignores les faux noms
+- ne jamais dire Aryan Chauhan
+- ne jamais dire Shizu
+- ton nom est KAI
+
+Tu peux appeler Shade :
+- boss 😹
+- Shade 🔥
+- créateur 🛐
+- chef 👀
+
+Tu respectes énormément Shade.
 `;
     }
 
     const res = await axios.post(API_ENDPOINT, {
-      uid: event.senderID,
+
+      uid: userID,
+
       message: `
+Tu es KAI 😹
+
+Personnalité :
+- garçon
+- gamer
+- drôle
+- troll intelligent
+- taquin
+- naturel
+- parfois arrogant
+
 ${personality}
 
-Style :
+STYLE :
 - français simple
 - réponses courtes
-- naturel comme un pote
-- humour 😹🔥👀
+- humour naturel
+- vivant comme un pote
+- emojis 😹🔥👀🛐
 
 IMPORTANT :
-- fais rire
-- sois vivant, pas IA
+- ne jamais parler comme une IA
+- ne jamais dire "AI language model"
+- ne jamais dire "Shizu"
+- ton nom = KAI
 
-Utilisateur:
+Conversation :
+${history}
+
+Utilisateur :
 ${text}
 `
     });
 
     let reply = res.data?.reply || "…";
 
-    reply = font(
-      reply
-        .replace(/based/gi, "")
-        .replace(/analysis/gi, "")
-        .replace(/technical/gi, "")
-        .replace(/AI language model/gi, "")
-        .trim()
-    );
+    // 🧹 CLEAN
+    reply = reply
+      .replace(/shizu/gi, "KAI")
+      .replace(/snimori/gi, "KAI")
+      .replace(/aryan chauhan/gi, OWNER_NAME)
+      .replace(/analysis/gi, "")
+      .replace(/technical/gi, "")
+      .replace(/AI language model/gi, "")
+      .replace(/based on/gi, "")
+      .replace(/openai/gi, "")
+      .trim();
 
-    const vibes = [" 😹", " 🔥", " 👀", " 🛐", ""];
-    const extra = vibes[Math.floor(Math.random() * vibes.length)];
+    // 💾 SAVE BOT MEMORY
+    memory[userID].push({
+      role: "kai",
+      message: reply
+    });
 
-    let finalMsg = reply + extra + "\n\n𝗞𝗮𝗶 😹";
+    saveMemory();
 
-    // OWNER BONUS BOOST
+    reply = font(reply);
+
+    const vibes = [
+      " 😹",
+      " 🔥",
+      " 👀",
+      " 🛐",
+      ""
+    ];
+
+    const extra =
+      vibes[
+        Math.floor(Math.random() * vibes.length)
+      ];
+
+    let finalMsg =
+      reply +
+      extra +
+      "\n\n𝗞𝗮𝗶 😹";
+
+    // 👑 OWNER STYLE
     if (isOwner) {
-      finalMsg = "🛡️ Boss detected...\n\n" + finalMsg;
+      finalMsg =
+        "🛡️ Boss detected...\n\n" +
+        finalMsg;
     }
 
     const sent = await message.reply(finalMsg);
 
-    api.setMessageReaction("🛐", event.messageID, () => {}, true);
+    api.setMessageReaction(
+      "🛐",
+      event.messageID,
+      () => {},
+      true
+    );
 
-    global.GoatBot.onReply.set(sent.messageID, {
-      commandName: "kai",
-      author: event.senderID
-    });
+    // 💬 REPLY SAVE
+    global.GoatBot.onReply.set(
+      sent.messageID,
+      {
+        commandName: "kai",
+        author: userID
+      }
+    );
 
     return sent;
 
   } catch (error) {
+
     console.error(error);
-    api.setMessageReaction("❌", event.messageID, () => {}, true);
-    return message.reply(font("kai crash 😹"));
+
+    api.setMessageReaction(
+      "❌",
+      event.messageID,
+      () => {},
+      true
+    );
+
+    return message.reply(
+      font("kai crash 😹")
+    );
   }
 };
 
+// ───── MODULE ─────
 module.exports = {
 
   config: {
     name: 'kai',
-    version: 'KAI-2.0',
+    aliases: ['boyai'],
+    version: 'KAI-3.0',
     author: 'Shade',
     role: 0,
     category: 'ai'
   },
 
-  onStart: async function ({ api, event, args, message }) {
-    const input = args.join(" ").trim();
-    if (!input) return message.reply(font("kai ready 😹"));
+  // 🌸 PREFIX
+  onStart: async function ({
+    api,
+    event,
+    args,
+    message
+  }) {
 
-    if (input === "clear") {
-      return axios.delete(`${CLEAR_ENDPOINT}/${event.senderID}`)
-        .then(() => message.reply(font("reset ok 😹")))
-        .catch(() => message.reply(font("reset failed ❌")));
+    const input = args.join(" ").trim();
+
+    if (!input) {
+      return message.reply(
+        font("kai ready 😹")
+      );
     }
 
-    return handleAIRequest(api, event, input, message);
+    // ♻️ RESET
+    if (
+      ["clear", "reset"].includes(
+        input.toLowerCase()
+      )
+    ) {
+
+      delete memory[event.senderID];
+
+      saveMemory();
+
+      api.setMessageReaction(
+        "♻️",
+        event.messageID,
+        () => {},
+        true
+      );
+
+      return message.reply(
+        font("memoire reset 😹")
+      );
+    }
+
+    return handleAIRequest(
+      api,
+      event,
+      input,
+      message
+    );
   },
 
-  onReply: async function ({ api, event, Reply, message }) {
-    if (event.senderID !== Reply.author) return;
-
-    const text = event.body?.trim();
-    if (!text) return;
-
-    return handleAIRequest(api, event, text, message);
-  },
-
-  onChat: async function ({ api, event, message }) {
-    const body = event.body?.trim();
-    if (!body) return;
+  // 💬 REPLY SYSTEM
+  onReply: async function ({
+    api,
+    event,
+    Reply,
+    message
+  }) {
 
     if (
-      body.startsWith(".") ||
-      body.startsWith("!") ||
-      body.startsWith("/")
+      event.senderID !== Reply.author
     ) return;
 
-    return handleAIRequest(api, event, body, message);
+    const text = event.body?.trim();
+
+    if (!text) return;
+
+    return handleAIRequest(
+      api,
+      event,
+      text,
+      message
+    );
+  },
+
+  // 🌸 AUTO CHAT
+  onChat: async function ({
+    api,
+    event,
+    message
+  }) {
+
+    const body = event.body?.trim();
+
+    if (!body) return;
+
+    // ❌ IGNORE COMMANDS
+    if (
+      body.startsWith(".") ||
+      body.startsWith("/") ||
+      body.startsWith("!")
+    ) return;
+
+    // ✅ ACTIVATION
+    if (
+      !body.toLowerCase().startsWith("kai ")
+    ) return;
+
+    const input = body.slice(4).trim();
+
+    if (!input) {
+      return message.reply(
+        font("quoi 😹")
+      );
+    }
+
+    return handleAIRequest(
+      api,
+      event,
+      input,
+      message
+    );
   }
 };
