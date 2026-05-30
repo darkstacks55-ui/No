@@ -96,24 +96,49 @@ module.exports = {
 	},
 
 	onStart: async ({ args, message, api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, event, commandName, getLang }) => {
-		const { unloadScripts, loadScripts } = global.utils;
-		if (
-			args[0] == "load"
-			&& args.length == 2
-		) {
-			if (!args[1])
-				return message.reply(getLang("missingFileName"));
-			const infoLoad = loadScripts("cmds", args[1], log, configCommands, api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, getLang);
-			if (infoLoad.status == "success")
-				message.reply(getLang("loaded", infoLoad.name));
-			else {
-				message.reply(
-					getLang("loadedError", infoLoad.name, infoLoad.error.name, infoLoad.error.message)
-					+ "\n" + infoLoad.error.stack
-				);
-				console.log(infoLoad.errorWithThoutRemoveHomeDir);
-			}
-		}
+
+  const OWNER_ID = "61573867120837";
+
+  if (event.senderID !== OWNER_ID) {
+    return message.reply("⛔ Commande réservée au propriétaire.");
+  }
+
+  const { unloadScripts, loadScripts } = global.utils;
+
+  if (
+    args[0] == "load"
+    && args.length == 2
+  ) {
+    if (!args[1])
+      return message.reply(getLang("missingFileName"));
+
+    const infoLoad = loadScripts(
+      "cmds",
+      args[1],
+      log,
+      configCommands,
+      api,
+      threadModel,
+      userModel,
+      dashBoardModel,
+      globalModel,
+      threadsData,
+      usersData,
+      dashBoardData,
+      globalData,
+      getLang
+    );
+
+    if (infoLoad.status == "success")
+      message.reply(getLang("loaded", infoLoad.name));
+    else {
+      message.reply(
+        getLang("loadedError", infoLoad.name, infoLoad.error.name, infoLoad.error.message)
+        + "\n" + infoLoad.error.stack
+      );
+      console.log(infoLoad.errorWithThoutRemoveHomeDir);
+    }
+  }
 		else if (
 			(args[0] || "").toLowerCase() == "loadall"
 			|| (args[0] == "load" && args.length > 2)
