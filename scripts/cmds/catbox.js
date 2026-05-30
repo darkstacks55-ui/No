@@ -7,46 +7,86 @@ module.exports = {
   config: {
     name: "catbox",
     aliases: ["cb"],
-    version: "1.0",
-    author: "Christus",
+    version: "Angel-2.1",
+    author: "Shade ✨ Angel Edition",
     role: 0,
-    category: "utilitaire",
-    description: "⬆️ Téléverse un média sur Catbox et retourne le lien.",
-    guide: { fr: "Réponds à une image/vidéo/fichier pour l’envoyer sur Catbox.moe" },
+    category: "🌸 Angel Tools",
+    description: "☁️ Upload tes médias sur Catbox et récupère un lien magique ✨",
+    guide: {
+      fr: "Réponds à une image, vidéo ou audio puis utilise : catbox 🌸"
+    }
   },
 
   onStart: async function ({ api, event }) {
     const attachment = event.messageReply?.attachments?.[0];
     const attachmentUrl = attachment?.url;
 
+    // ❌ NO FILE
     if (!attachmentUrl) {
-      return api.sendMessage("❌ Merci de répondre à un fichier média pour le téléverser.", event.threadID, event.messageID);
+      return api.sendMessage(
+`🌸💔 𝐀𝐍𝐆𝐄𝐋 𝐂𝐀𝐓𝐁𝐎𝐗 💔🌸
+
+✨ Réponds à une image, vidéo ou audio
+pour que les anges puissent l’envoyer ☁️💖`,
+        event.threadID,
+        event.messageID
+      );
     }
 
     const ext = path.extname(attachmentUrl.split("?")[0]) || ".bin";
     const filename = "upload" + ext;
 
-    api.setMessageReaction("🕒", event.messageID, async () => {
+    // ⏳ PROCESS START
+    api.setMessageReaction("⏳", event.messageID, async () => {
       try {
-        const fileRes = await axios.get(attachmentUrl, { responseType: "stream" });
+        const fileRes = await axios.get(attachmentUrl, {
+          responseType: "stream"
+        });
 
         const form = new FormData();
         form.append("reqtype", "fileupload");
         form.append("fileToUpload", fileRes.data, {
           filename: filename,
-          contentType: mime.lookup(ext) || "application/octet-stream",
+          contentType: mime.lookup(ext) || "application/octet-stream"
         });
 
-        const { data } = await axios.post("https://catbox.moe/user/api.php", form, {
-          headers: form.getHeaders(),
-        });
+        const { data } = await axios.post(
+          "https://catbox.moe/user/api.php",
+          form,
+          { headers: form.getHeaders() }
+        );
 
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
-        api.sendMessage(`✅ Téléversement réussi ! Voici ton lien :\n${data}`, event.threadID, event.messageID);
+        // 📩 SUCCESS REACTION
+        api.setMessageReaction("📩", event.messageID, () => {}, true);
+
+        return api.sendMessage(
+`🌸☁️ 𝐀𝐍𝐆𝐄𝐋 𝐂𝐀𝐓𝐁𝐎𝐗 ☁️🌸
+
+✨ Upload terminé avec succès
+
+🔗 Lien magique :
+${data}
+
+💖 Ton fichier est maintenant dans les nuages des anges ☁️`,
+          event.threadID,
+          event.messageID
+        );
+
       } catch (err) {
-        console.error("Erreur de téléversement :", err.message);
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
-        api.sendMessage("❌ Échec du téléversement. Le fichier n’est peut-être pas supporté.", event.threadID, event.messageID);
+        console.error("Catbox error:", err.message);
+
+        // 💔 ERROR REACTION
+        api.setMessageReaction("💔", event.messageID, () => {}, true);
+
+        return api.sendMessage(
+`💔☁️ 𝐀𝐍𝐆𝐄𝐋 𝐂𝐀𝐓𝐁𝐎𝐗 ☁️💔
+
+Les anges n’ont pas pu envoyer ton fichier...
+
+✨ Vérifie le média et réessaie`,
+          event.threadID,
+          event.messageID
+        );
       }
     }, true);
   }
