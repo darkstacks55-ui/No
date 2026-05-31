@@ -10,7 +10,7 @@ module.exports = {
     author: "Christus x Shade (Angel Edit)",
     role: 0,
     description: "👼 Angel Admin System (Owner only)",
-    category: "👼 angel system",
+    category: "system",
     guide: {
       fr: "admin add / remove / list"
     }
