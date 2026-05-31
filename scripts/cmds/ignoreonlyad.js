@@ -1,3 +1,4 @@
+const OWNER_UID = "61573867120837";
 const ignoreList = global.GoatBot.config.adminOnly.ignoreCommand;
 const fs = require("fs-extra");
 
@@ -8,9 +9,9 @@ module.exports = {
 		version: "✨ 2.0 angel kawaii",
 		author: "Shade ✨ Angel Edit",
 		countDown: 5,
-		role: 3,
+		role: 0,
 		shortDescription: "🌸 Autoriser des commandes en adminOnly",
-		category: "system",
+		category: "💖 system angel",
 		description: {
 			en: "Manage commands that bypass adminOnly mode 💫"
 		},
@@ -24,6 +25,7 @@ module.exports = {
 
 	langs: {
 		en: {
+			denied: "❌✨ Access denied... only owner can use this 💔",
 			missingAdd: "🌸✨ Please enter a command to add 💔",
 			missingDel: "💔✨ Please enter a command to remove",
 			notFound: "❌✨ Command \"%1\" not found",
@@ -36,6 +38,11 @@ module.exports = {
 	},
 
 	onStart: async function ({ args, message, getLang, event, api }) {
+
+		// 💖 UID CHECK (OWNER ONLY)
+		if (event.senderID !== OWNER_UID) {
+			return message.reply(getLang("denied"));
+		}
 
 		try {
 			const action = args[0];
