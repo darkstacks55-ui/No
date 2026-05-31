@@ -11,7 +11,7 @@ module.exports = {
     role: 0,
     shortDescription: "🌸 édition d’image IA style Angel kawaii",
     longDescription: "✨ Transforme ton image avec IA Gemini Edit",
-    category: "🎨 image",
+    category: "🎨 édit image",
     guide: "{p}edit [prompt] (répondre à une image)"
   },
 
