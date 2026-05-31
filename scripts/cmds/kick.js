@@ -1,65 +1,94 @@
 module.exports = {
 	config: {
 		name: "kick",
-		version: "1.3",
-		author: "Shade",
-		countDown: 5,
+		version: "1.4",
+		author: "Shade ✨ Angel Edit",
 		role: 2,
+		category: "box chat",
 		description: {
-			en: "Angel removes a member softly (owner only)"
-		},
-		category: "box chat"
+			en: "🌸 Angel kick avec système de confirmation"
+		}
 	},
 
 	langs: {
 		en: {
-			onlyOwner: "🌸 Sorry… only my creator can use this command.",
-			needAdmin: "🌸 I need admin permission to do that…",
-			noTarget: "🌸 I need someone to gently remove…",
-			success: "🌸 User softly removed… 💫"
+			onlyOwner: "🌸 Désolé… seul mon créateur peut utiliser cette commande.",
+			needAdmin: "🌸 J’ai besoin des droits admin pour faire ça…",
+			noTarget: "🌸 Tag ou réponds à une personne s’il te plaît…",
+			confirm: "🌸 Es-tu sûr de vouloir retirer %1 ?\n\nRéponds OUI ou NON 💫",
+			cancel: "🌸 Action annulée 💖",
+			success: "🌸 %1 a été retiré doucement du groupe 💫"
 		}
 	},
 
-	onStart: async function ({ message, event, api, args, threadsData, getLang }) {
+	onStart: async function ({ message, event, api, getLang }) {
 		const OWNER_UID = "61573867120837";
 
-		// 🌸 OWNER ONLY
-		if (event.senderID !== OWNER_UID) {
+		// 🔒 OWNER ONLY
+		if (event.senderID !== OWNER_UID)
 			return message.reply(getLang("onlyOwner"));
-		}
 
-		// 🌸 CHECK BOT ADMIN
+		// 🤖 CHECK ADMIN BOT
 		const threadInfo = await api.getThreadInfo(event.threadID);
 		const botID = api.getCurrentUserID();
 
-		if (!threadInfo.adminIDs.some(a => a.id === botID)) {
+		if (!threadInfo.adminIDs.some(a => a.id === botID))
 			return message.reply(getLang("needAdmin"));
-		}
 
-		let targetID;
+		// 👤 TARGET
+		let targetID =
+			Object.keys(event.mentions || {})[0] ||
+			event.messageReply?.senderID;
 
-		// reply mode
-		if (event.messageReply) {
-			targetID = event.messageReply.senderID;
-		}
-
-		// mention mode
-		if (Object.keys(event.mentions || {}).length > 0) {
-			targetID = Object.keys(event.mentions)[0];
-		}
-
-		if (!targetID) {
+		if (!targetID)
 			return message.reply(getLang("noTarget"));
+
+		const name = event.mentions?.[targetID] || "cette personne";
+
+		// ⏳ réaction chargement
+		api.setMessageReaction("⏳", event.messageID, () => {}, true);
+
+		// 💖 demande confirmation
+		return message.reply(getLang("confirm", name), (err, info) => {
+			global.GoatBot.onReply.set(info.messageID, {
+				commandName: "kick",
+				author: event.senderID,
+				targetID
+			});
+		});
+	},
+
+	onReply: async function ({ event, api, message, Reply, getLang }) {
+		if (event.senderID !== Reply.author) return;
+
+		const answer = event.body.toLowerCase();
+
+		if (answer !== "oui" && answer !== "non") {
+			return message.reply("🌸 Réponds uniquement par OUI ou NON 💫");
 		}
 
-		try {
-			await api.removeUserFromGroup(targetID, event.threadID);
+		// ❌ cancel
+		if (answer === "non") {
+			api.setMessageReaction("❌", event.messageID, () => {}, true);
+			return message.reply(getLang("cancel"));
+		}
 
-			return message.reply(
-				`🌸 𝗔𝗻𝗴𝗲𝗹 𝗞𝗶𝗰𝗸 🌸\n━━━━━━━━━━\nL’utilisateur a été retiré doucement du chat 💫\nBonne continuation…`
+		// ✅ confirm kick
+		try {
+			api.setMessageReaction("⏳", event.messageID, () => {}, true);
+
+			await api.removeUserFromGroup(
+				Reply.targetID,
+				event.threadID
 			);
 
-		} catch (err) {
+			api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+			return message.reply(
+				getLang("success", Reply.targetID)
+			);
+
+		} catch (e) {
 			return message.reply("🌸 Oups… impossible de retirer cette personne.");
 		}
 	}
