@@ -579,7 +579,7 @@ module.exports = {
     version: '5.0',
     author: 'Shade',
     role: 0,
-    category: '🤖 chat bot',
+    category: '🤖 ai',
 
     shortDescription: {
       en: 'AI Girl 🌸'
