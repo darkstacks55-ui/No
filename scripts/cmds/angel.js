@@ -186,7 +186,7 @@ module.exports = {
     version: "4.0",
     author: "Shade",
     role: 0,
-    category: "ai"
+    category: "🤖 ai"
   },
 
   // 🌸 PREFIX COMMAND
