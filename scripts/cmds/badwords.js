@@ -7,7 +7,7 @@ module.exports = {
 		countDown: 5,
 		role: 0,
 		description: "👼 Angel protection contre insultes + spam emoji",
-		category: "👼 angel security"
+		category: "security"
 	},
 
 	langs: {
