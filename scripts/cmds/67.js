@@ -14,9 +14,9 @@ onChat: async function ({ event, api }) {
 const body = (event.body || "").toLowerCase().trim();
 
 const gifs = [
-  "https://tenor.com/t5PGB8YJaQM.gif",
-  "https://tenor.com/etgSZWGm020.gif",
-  "https://tenor.com/sHu1fRAnZRP.gif"
+  "https://i.imgur.com/lcFfLSX.gif",
+  "https://i.imgur.com/4wDHfJq.gif",
+  "https://i.imgur.com/jSDs0ak.gif"
 ];
 
 const videoUrl = "https://files.catbox.moe/cu3atc.mp4";
