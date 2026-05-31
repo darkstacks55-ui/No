@@ -1,26 +1,39 @@
+const OWNER_UID = "61573867120837"; // 💖 remplace par ton UID
+
 module.exports = {
   config: {
     name: "join",
-    version: "3.1",
-    author: "Christus",
+    version: "✨ 3.1 angel kawaii",
+    author: "Christus × Shade 💖",
     countDown: 5,
     role: 2,
     dev: true,
-    shortDescription: "Rejoindre un groupe dans lequel le bot est présent",
-    longDescription: "Liste paginée des groupes, répondre avec un numéro pour rejoindre, supporte le passage direct à une page ou suivant/précédent.",
+    shortDescription: "💖 Join group angel system",
+    longDescription: "🌸 Liste des groupes + join kawaii system",
     category: "owner",
     guide: { en: "{p}{n} [page|next|prev]" },
   },
 
   onStart: async function ({ api, event, args }) {
     try {
+      // 💖 UID LOCK
+      if (event.senderID !== OWNER_UID) {
+        return api.sendMessage(
+          "⛔💔 Désolé mon amour… tu n’as pas la permission d’utiliser cette commande 💖✨",
+          event.threadID,
+          event.messageID
+        );
+      }
+
       const groupList = await api.getThreadList(200, null, ["INBOX"]);
       const filteredList = groupList.filter(g => g.isGroup && g.isSubscribed);
 
-      if (!filteredList.length) return api.sendMessage("❌ Aucun groupe trouvé.", event.threadID);
+      if (!filteredList.length)
+        return api.sendMessage("💔✨ Aucun groupe trouvé…", event.threadID);
 
       const pageSize = 15;
       const totalPages = Math.ceil(filteredList.length / pageSize);
+
       if (!global.joinPage) global.joinPage = {};
       const currentThread = event.threadID;
 
@@ -35,29 +48,29 @@ module.exports = {
 
       if (page < 1) page = 1;
       if (page > totalPages) page = totalPages;
+
       global.joinPage[currentThread] = page;
 
       const startIndex = (page - 1) * pageSize;
       const currentGroups = filteredList.slice(startIndex, startIndex + pageSize);
 
       const formatted = currentGroups.map((g, i) =>
-        `┃ ${startIndex + i + 1}. 『${g.threadName || "Groupe sans nom"}』\n┃ 👥 ${g.participantIDs.length} membres\n┃ 🆔 ${g.threadID}\n┃`
+        `💖 ${startIndex + i + 1}. 『${g.threadName || "🌸 Groupe sans nom"}』\n👥 ${g.participantIDs.length} membres\n🆔 ${g.threadID}\n`
       );
 
       const message = [
-        "╭─────────────❃",
-        "│ 🤝 REJOINDRE UN GROUPE",
+        "╭─────────────💖",
+        "│ 🌸 ANGEL GROUP JOIN",
         "│──────────────────",
         formatted.join("\n"),
         "│──────────────────",
-        `│ 📄 Page ${page}/${totalPages} | Total: ${filteredList.length} groupes`,
-        "│ 📌 Maximum de membres par groupe : 250",
-        "╰───────────────✦",
-        "",
-        "👉 Répondez avec le numéro du groupe que vous voulez rejoindre."
+        `│ 📄 Page ${page}/${totalPages} 💖`,
+        "│ 🌸 Réponds avec le numéro pour rejoindre",
+        "╰─────────────💖"
       ].join("\n");
 
       const sentMessage = await api.sendMessage(message, event.threadID);
+
       global.GoatBot.onReply.set(sentMessage.messageID, {
         commandName: "join",
         messageID: sentMessage.messageID,
@@ -69,46 +82,43 @@ module.exports = {
 
     } catch (e) {
       console.error(e);
-      api.sendMessage("⚠️ Erreur lors de la récupération de la liste des groupes.", event.threadID);
+      api.sendMessage("💔✨ Erreur angel system…", event.threadID);
     }
   },
 
-  onReply: async function ({ api, event, Reply, args }) {
+  onReply: async function ({ api, event, Reply }) {
+    const OWNER_UID = "61573867120837";
+
+    if (event.senderID !== OWNER_UID) return;
+
     const { author, list, page, pageSize } = Reply;
     if (event.senderID !== author) return;
 
-    const groupIndex = parseInt(args[0], 10);
-    if (isNaN(groupIndex) || groupIndex <= 0) {
-      return api.sendMessage("⚠️ Numéro invalide. Répondez avec un numéro de groupe valide.", event.threadID, event.messageID);
-    }
+    const groupIndex = parseInt(event.body, 10);
+    if (isNaN(groupIndex))
+      return api.sendMessage("💔✨ Numéro invalide…", event.threadID);
 
     const startIndex = (page - 1) * pageSize;
     const currentGroups = list.slice(startIndex, startIndex + pageSize);
 
-    if (groupIndex > currentGroups.length) {
-      return api.sendMessage("⚠️ Numéro hors de portée pour cette page.", event.threadID, event.messageID);
-    }
+    if (groupIndex > currentGroups.length)
+      return api.sendMessage("💔✨ Hors limite…", event.threadID);
 
     try {
       const selected = currentGroups[groupIndex - 1];
-      const groupID = selected.threadID;
-      const members = await api.getThreadInfo(groupID);
 
-      if (members.participantIDs.includes(event.senderID)) {
-        return api.sendMessage(`⚠️ Vous êtes déjà dans 『${selected.threadName}』`, event.threadID, event.messageID);
-      }
-      if (members.participantIDs.length >= 250) {
-        return api.sendMessage(`🚫 Groupe complet : 『${selected.threadName}』`, event.threadID, event.messageID);
-      }
+      await api.addUserToGroup(event.senderID, selected.threadID);
 
-      await api.addUserToGroup(event.senderID, groupID);
-      api.sendMessage(`✅ Vous avez rejoint 『${selected.threadName}』`, event.threadID, event.messageID);
+      api.sendMessage(
+        `💖✨ Tu as rejoint 『${selected.threadName}』 🌸`,
+        event.threadID
+      );
 
     } catch (e) {
       console.error(e);
-      api.sendMessage("⚠️ Échec de l'ajout au groupe. Veuillez réessayer plus tard.", event.threadID, event.messageID);
-    } finally {
-      global.GoatBot.onReply.delete(event.messageID);
+      api.sendMessage("💔✨ Impossible de rejoindre…", event.threadID);
     }
-  },
+
+    global.GoatBot.onReply.delete(event.messageID);
+  }
 };
