@@ -1,8 +1,8 @@
 const axios = require('axios');
-const fs = require('fs-extra'); 
+const fs = require('fs-extra');
 const path = require('path');
 
-const API_ENDPOINT = "https://dev.oculux.xyz/api/gptimage"; 
+const API_ENDPOINT = "https://dev.oculux.xyz/api/gptimage";
 const SEED_FLAG = "--seed";
 const WIDTH_FLAG = "--width";
 const HEIGHT_FLAG = "--height";
@@ -11,54 +11,53 @@ module.exports = {
   config: {
     name: "gpt",
     aliases: ["gptimg", "aimage"],
-    version: "1.0", 
-    author: "Christus",
+    version: "1.0 angel kawaii",
+    author: "Shade ✨ Angel Edit",
     countDown: 20,
     role: 0,
-    longDescription: "Generate or edit an image using the GPT Image model. Reply to an image to edit it.",
+    longDescription: "💖 Generate or edit images using GPT Image model (Angel kawaii)",
     category: "ai-image",
     guide: {
-      en: 
-        "{pn} <prompt> [--seed <true/false or number>] [--width <pixels>] [--height <pixels>]\n" +
-        "• To generate: {pn} a futuristic city\n" +
-        "• To edit: Reply to an image with {pn} remove the background\n" +
-        "• With options: {pn} a cat playing guitar --seed 12345 --width 1024 --height 768"
+      en:
+        "{pn} <prompt> [--seed <true/false or number>] [--width <px>] [--height <px>]\n" +
+        "💖 Example: {pn} cute cat in space\n" +
+        "💖 Edit: reply image + {pn} remove background"
     }
   },
 
-  onStart: async function({ message, args, event }) {
+  onStart: async function ({ message, args, event }) {
+
     let rawPrompt = args.join(" ");
     let prompt = rawPrompt;
+
     let refUrl = null;
     let seed = null;
     let width = null;
     let height = null;
 
-    if (event.messageReply && event.messageReply.attachments && event.messageReply.attachments.length > 0) {
-      const imageAttachment = event.messageReply.attachments.find(att => att.type === 'photo' || att.type === 'image');
-      if (imageAttachment && imageAttachment.url) {
-        refUrl = imageAttachment.url;
+    // 💖 IMAGE REPLY CHECK (safe)
+    try {
+      if (event.messageReply?.attachments?.length) {
+        const att = event.messageReply.attachments.find(
+          a => a.type === "photo" || a.type === "image"
+        );
+        if (att?.url) refUrl = att.url;
       }
-    }
+    } catch (e) {}
 
-    const extractFlag = (flagName, regex) => {
+    // 💖 FLAG EXTRACTOR SAFE
+    const extractFlag = (flag, regex) => {
       const match = prompt.match(regex);
-      if (match && match[1]) {
-        prompt = prompt.replace(match[0], "").trim();
-        return match[1];
-      }
-      return null;
+      if (!match) return null;
+      prompt = prompt.replace(match[0], "").trim();
+      return match[1];
     };
 
     const seedValue = extractFlag(SEED_FLAG, new RegExp(`${SEED_FLAG}\\s+([^\\s]+)`, 'i'));
     if (seedValue) {
-      if (seedValue.toLowerCase() === 'true') {
-        seed = true;
-      } else if (seedValue.toLowerCase() === 'false') {
-        seed = false;
-      } else if (!isNaN(parseInt(seedValue))) {
-        seed = parseInt(seedValue);
-      }
+      if (seedValue.toLowerCase() === "true") seed = true;
+      else if (seedValue.toLowerCase() === "false") seed = false;
+      else if (!isNaN(seedValue)) seed = parseInt(seedValue);
     }
 
     const widthValue = extractFlag(WIDTH_FLAG, new RegExp(`${WIDTH_FLAG}\\s+(\\d+)`, 'i'));
@@ -69,85 +68,70 @@ module.exports = {
 
     prompt = prompt.trim();
 
-    if (!prompt || !/^[\x00-\x7F]*$/.test(prompt)) {
-        return message.reply("❌ Please provide a valid English prompt for image generation or editing.");
+    // 💖 SAFE PROMPT CHECK
+    if (!prompt) {
+      return message.reply("💔✨ Please give me a prompt, angel needs it 💖");
     }
-    
+
     message.reaction("⏳", event.messageID);
-    let tempFilePath; 
+
+    let tempFilePath;
 
     try {
       let fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(prompt)}`;
-      
-      if (refUrl) {
-        fullApiUrl += `&ref=${encodeURIComponent(refUrl)}`;
-      }
-      if (seed !== null) {
-        fullApiUrl += `&seed=${seed}`;
-      }
-      if (width !== null) {
-        fullApiUrl += `&width=${width}`;
-      }
-      if (height !== null) {
-        fullApiUrl += `&height=${height}`;
-      }
-      
-      const imageDownloadResponse = await axios.get(fullApiUrl, {
-          responseType: 'stream',
-          timeout: 90000
+
+      if (refUrl) fullApiUrl += `&ref=${encodeURIComponent(refUrl)}`;
+      if (seed !== null) fullApiUrl += `&seed=${seed}`;
+      if (width !== null) fullApiUrl += `&width=${width}`;
+      if (height !== null) fullApiUrl += `&height=${height}`;
+
+      const res = await axios.get(fullApiUrl, {
+        responseType: "stream",
+        timeout: 90000
       });
 
-      if (imageDownloadResponse.status !== 200) {
-           throw new Error(`API request failed with status code ${imageDownloadResponse.status}.`);
+      if (!res || res.status !== 200) {
+        throw new Error(`Angel API error (${res?.status || "unknown"})`);
       }
-      
-      const cacheDir = path.join(__dirname, 'cache');
-      if (!fs.existsSync(cacheDir)) {
-          await fs.mkdirp(cacheDir); 
-      }
-      
-      tempFilePath = path.join(cacheDir, `gpt_image_output_${Date.now()}.png`);
-      
+
+      const cacheDir = path.join(__dirname, "cache");
+
+      // 💖 SAFE FOLDER CREATION
+      await fs.ensureDir(cacheDir);
+
+      tempFilePath = path.join(
+        cacheDir,
+        `angel_gpt_${Date.now()}.png`
+      );
+
       const writer = fs.createWriteStream(tempFilePath);
-      imageDownloadResponse.data.pipe(writer);
+      res.data.pipe(writer);
 
       await new Promise((resolve, reject) => {
         writer.on("finish", resolve);
-        writer.on("error", (err) => {
-          writer.close();
-          reject(err);
-        });
+        writer.on("error", reject);
       });
 
-      message.reaction("✅", event.messageID);
+      message.reaction("💖", event.messageID);
+
       await message.reply({
-        body: `GPT Image ${refUrl ? "edited" : "generated"} ✨`,
+        body: `🌸✨ Angel GPT Image ${refUrl ? "Edit Mode" : "Generate Mode"} 💖`,
         attachment: fs.createReadStream(tempFilePath)
       });
 
     } catch (error) {
-      message.reaction("❌", event.messageID);
-      
-      let errorMessage = "An error occurred during image generation/editing.";
-      if (error.response) {
-         if (error.response.status === 404) {
-             errorMessage = "API Endpoint not found (404).";
-         } else {
-             errorMessage = `HTTP Error: ${error.response.status}`;
-         }
-      } else if (error.code === 'ETIMEDOUT') {
-         errorMessage = `Operation timed out. Try a simpler prompt or check API status.`;
-      } else if (error.message) {
-         errorMessage = `${error.message}`;
-      } else {
-         errorMessage = `Unknown error.`;
-      }
 
-      console.error("GPT Image Command Error:", error);
-      message.reply(`❌ ${errorMessage}`);
+      message.reaction("❌", event.messageID);
+
+      console.error("Angel GPT error:", error);
+
+      return message.reply(
+        "💔✨ Angel failed to generate image...\nTry a simpler prompt 💖"
+      );
+
     } finally {
-      if (tempFilePath && fs.existsSync(tempFilePath)) {
-          await fs.unlink(tempFilePath); 
+      if (tempFilePath && await fs.pathExists(tempFilePath)) {
+        await fs.remove(tempFilePath);
       }
     }
   }
