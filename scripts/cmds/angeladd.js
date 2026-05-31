@@ -11,7 +11,7 @@ module.exports = {
       fr: "💖 Ajouter des membres au groupe (mode Angel owner only)",
       en: "Angel style add user command (owner only)"
     },
-    category: "👼 angel group"
+    category: "system"
   },
 
   langs: {
