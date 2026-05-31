@@ -12,34 +12,36 @@ let hubbleData;
 module.exports = {
 	config: {
 		name: "hubble",
-		version: "1.3",
-		author: "NTKhang",
+		version: "1.3 ✨ Angel kawaii",
+		author: "Shade ✨ Angel Edit",
 		countDown: 5,
 		role: 0,
 		description: {
 			vi: "Xem ảnh từ Hubble",
-			en: "View Hubble images"
+			en: "View Hubble images 🌌💖"
 		},
-		category: "owner",
+		category: "info",
 		guide: {
-			en: "{pn} <date (mm-dd)>"
+			en: "{pn} <date (mm-dd)> 💫"
 		}
 	},
 
 	langs: {
 		vi: {
-			invalidDate: "Ngày tháng bạn nhập vào không hợp lệ, vui lòng nhập lại theo định dạng mm-dd",
-			noImage: "Không có ảnh nào được tìm thấy trong ngày này"
+			invalidDate: "🌸✨ Ngày không hợp lệ rồi nha~ (mm-dd)",
+			noImage: "💔✨ Không tìm thấy ảnh trong ngày này"
 		},
 		en: {
-			invalidDate: "The date you entered is invalid, please enter again in the mm-dd format",
-			noImage: "No images were found on this day"
+			invalidDate: "🌸✨ Invalid date format! Use mm-dd",
+			noImage: "💔✨ No cosmic image found for this date"
 		}
 	},
 
 	onLoad: async function () {
 		if (!fs.existsSync(pathData)) {
-			const res = await axios.get('https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2/main/scripts/cmds/assets/hubble/nasa.json');
+			const res = await axios.get(
+				'https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2/main/scripts/cmds/assets/hubble/nasa.json'
+			);
 			fs.writeFileSync(pathData, JSON.stringify(res.data, null, 2));
 		}
 		hubbleData = JSON.parse(fs.readFileSync(pathData));
@@ -48,14 +50,31 @@ module.exports = {
 	onStart: async function ({ message, args, getLang }) {
 		const date = args[0] || "";
 		const dateText = checkValidDate(date);
+
 		if (!date || !dateText)
-			return message.reply(getLang('invalidDate'));
+			return message.reply("🌸💫 " + getLang('invalidDate'));
+
 		const data = hubbleData.find(e => e.date.startsWith(dateText));
+
 		if (!data)
-			return message.reply(getLang('noImage'));
+			return message.reply("💔🌌 " + getLang('noImage'));
+
 		const { image, name, caption, url } = data;
-		const getImage = await getStreamFromURL('https://imagine.gsfc.nasa.gov/hst_bday/images/' + image);
-		const msg = `📅 Date: ${dateText}\n🌀 Name: ${name}\n📖 Caption: ${caption}\n🔗 Source: ${url}`;
+
+		const getImage = await getStreamFromURL(
+			'https://imagine.gsfc.nasa.gov/hst_bday/images/' + image
+		);
+
+		const msg =
+`╭───────────────✦
+│ 🌌 𝗛𝗨𝗕𝗕𝗟𝗘 𝗖𝗢𝗦𝗠𝗜𝗖 𝗩𝗜𝗘𝗪 ✨
+├───────────────
+│ 📅 Date : ${dateText}
+│ 🌀 Name : ${name}
+│ 📖 Info : ${caption}
+│ 🔗 Source : ${url}
+╰───────────────✦`;
+
 		message.reply({
 			body: msg,
 			attachment: getImage
@@ -63,28 +82,30 @@ module.exports = {
 	}
 };
 
-const monthText = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const monthText = [
+	'January','February','March','April','May','June',
+	'July','August','September','October','November','December'
+];
+
 function checkValidDate(date) {
 	const dateArr = date.split(/[-/]/);
-	if (dateArr.length != 2)
-		return false;
+	if (dateArr.length != 2) return false;
+
 	let day;
 	let month;
+
 	if (dateArr[0] < 13) {
 		day = dateArr[1];
 		month = dateArr[0];
-	}
-	else {
+	} else {
 		day = dateArr[0];
 		month = dateArr[1];
 	}
-	if (month < 1 || month > 12)
-		return false;
-	if (day < 1 || day > 31)
-		return false;
-	if (month === 2 && day > 29)
-		return false;
-	if ([4, 6, 9, 11].includes(month) && day > 30)
-		return false;
+
+	if (month < 1 || month > 12) return false;
+	if (day < 1 || day > 31) return false;
+	if (month === 2 && day > 29) return false;
+	if ([4, 6, 9, 11].includes(month) && day > 30) return false;
+
 	return monthText[month - 1] + ' ' + parseInt(day);
 }
