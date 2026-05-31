@@ -10,7 +10,7 @@ module.exports = {
     author: "Christus + Shade fix",
     role: 2,
     description: "Gérer les demandes d'amis (accept/refuse)",
-    category: "utility",
+    category: "owner",
     guide: {
       en: "{pn} add <num> | del <num> | add all | del all"
     }
