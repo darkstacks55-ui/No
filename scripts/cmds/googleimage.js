@@ -11,7 +11,7 @@ module.exports = {
     role: 0,
     countDown: 5,
     description: { fr: "Rechercher des images depuis Google Images." },
-    category: "image",
+    category: "🌸 image",
     guide: { fr: "{pn} <recherche> - <nombre>\nExemple : {pn} Naruto - 5" },
   },
 
