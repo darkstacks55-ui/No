@@ -6,86 +6,94 @@ const sharp = require("sharp");
 module.exports.config = {
   name: "imagedetail",
   aliases: ["imgdetail"],
-  version: "1.0",
-  author: "Christus",
+  version: "✨ 1.1 angel kawaii",
+  author: "Christus ✨ Shade Edit",
   countDown: 5,
   role: 0,
-  description: "Afficher les métadonnées détaillées d'une image",
-  category: "image",
-  guide: "{pn} répondre à une image"
+  description: "💖 Affiche les métadonnées d'une image avec style angel ✨",
+  category: "🌸 image",
+  guide: "{pn} reply à une image 📸"
 };
 
 module.exports.onStart = async ({ api, event }) => {
+  const send = (text) =>
+    api.sendMessage(`🌸✨ ${text}`, event.threadID, event.messageID);
+
   try {
     const attachment = event.messageReply?.attachments?.[0];
+
     if (!attachment || attachment.type !== "photo") {
-      return api.sendMessage(
-        "📸 Veuillez répondre à une photo pour obtenir ses détails !",
-        event.threadID,
-        event.messageID
-      );
+      return send("📸 Réponds à une image pour que je puisse lire ses secrets 💖✨");
     }
 
     const imgUrl = attachment.url;
 
-    const imgBuffer = await axios
-      .get(imgUrl, { responseType: "arraybuffer" })
-      .then(res => res.data);
+    const imgBuffer = await axios.get(imgUrl, {
+      responseType: "arraybuffer"
+    }).then(res => res.data);
 
-    const tempPath = path.join(__dirname, `temp_${Date.now()}.jpg`);
+    const tempPath = path.join(__dirname, `angel_${Date.now()}.jpg`);
     await fs.writeFile(tempPath, imgBuffer);
 
     const metadata = await sharp(imgBuffer).metadata();
 
-    function approximateRatio(width, height) {
-      const ratioDecimal = width / height;
-      const standardRatios = [
-        { ratio: 1, label: "1:1" },
-        { ratio: 4 / 3, label: "4:3" },
-        { ratio: 3 / 2, label: "3:2" },
-        { ratio: 16 / 9, label: "16:9" },
-        { ratio: 9 / 16, label: "9:16" },
-        { ratio: 21 / 9, label: "21:9" },
-        { ratio: 3 / 4, label: "3:4" },
-        { ratio: 2 / 3, label: "2:3" },
-      ];
-      let closest = standardRatios[0];
-      let minDiff = Math.abs(ratioDecimal - closest.ratio);
-      for (const r of standardRatios) {
-        const diff = Math.abs(ratioDecimal - r.ratio);
-        if (diff < minDiff) {
-          minDiff = diff;
+    const ratioList = [
+      { r: 1, l: "1:1" },
+      { r: 4 / 3, l: "4:3" },
+      { r: 3 / 2, l: "3:2" },
+      { r: 16 / 9, l: "16:9" },
+      { r: 9 / 16, l: "9:16" },
+      { r: 21 / 9, l: "21:9" },
+      { r: 3 / 4, l: "3:4" },
+      { r: 2 / 3, l: "2:3" }
+    ];
+
+    let ratio = "N/A";
+    let orientation = "🌸 Inconnu";
+
+    if (metadata.width && metadata.height) {
+      const ratioDecimal = metadata.width / metadata.height;
+
+      let closest = ratioList[0];
+      let diffMin = Math.abs(ratioDecimal - closest.r);
+
+      for (const r of ratioList) {
+        const diff = Math.abs(ratioDecimal - r.r);
+        if (diff < diffMin) {
+          diffMin = diff;
           closest = r;
         }
       }
-      return closest.label;
+
+      ratio = closest.l;
+
+      if (metadata.width > metadata.height) orientation = "📺 Paysage";
+      else if (metadata.width < metadata.height) orientation = "📱 Portrait";
+      else orientation = "🔳 Carré";
     }
 
-    let ratio = "N/A";
-    let orientationType = "N/A";
-
-    if (metadata.width && metadata.height) {
-      ratio = approximateRatio(metadata.width, metadata.height);
-      if (metadata.width > metadata.height) orientationType = "Paysage";
-      else if (metadata.width < metadata.height) orientationType = "Portrait";
-      else orientationType = "Carré";
-    }
+    const sizeKB = (imgBuffer.byteLength / 1024).toFixed(2);
+    const sizeMB = (imgBuffer.byteLength / (1024 * 1024)).toFixed(2);
 
     const caption =
-      `✨ DÉTAILS DE L'IMAGE ✨\n\n` +
-      `⦿ Format : ${metadata.format || "Inconnu"}\n` +
-      `⦿ Largeur : ${metadata.width || 0}px\n` +
-      `⦿ Hauteur : ${metadata.height || 0}px\n` +
-      `⦿ Ratio : ${ratio} (${orientationType})\n` +
-      `⦿ Taille du fichier : ${(imgBuffer.byteLength / 1024).toFixed(2)} KB (${(imgBuffer.byteLength / (1024 * 1024)).toFixed(2)} MB)\n` +
-      `⦿ Profondeur des bits : ${metadata.depth || "N/A"}\n` +
-      `⦿ Canaux : ${metadata.channels || "N/A"}\n` +
-      `⦿ Espace colorimétrique : ${metadata.space || "N/A"}\n` +
-      `⦿ Alpha : ${metadata.hasAlpha ? "Oui" : "Non"}\n` +
-      `⦿ Compression : ${metadata.compression || "N/A"}\n` +
-      `⦿ Orientation : ${metadata.orientation || "N/A"}\n` +
-      `⦿ Progressif : ${metadata.isProgressive ? "Oui" : "Non"}\n\n` +
-      `🧠 Commande créée par Christus 💙`;
+`╭───────────────✦
+│ 💖 𝗜𝗠𝗔𝗚𝗘 𝗗𝗘𝗧𝗔𝗜𝗟𝗦 𝗔𝗡𝗚𝗘𝗟 ✨
+├────────────────
+│ 🧾 Format : ${metadata.format || "N/A"}
+│ 📏 Taille : ${metadata.width || 0} x ${metadata.height || 0}px
+│ 📐 Ratio : ${ratio}
+│ 🌈 Orientation : ${orientation}
+│ 📦 Poids : ${sizeKB} KB (${sizeMB} MB)
+│ 🧠 Bits : ${metadata.depth || "N/A"}
+│ 🎨 Canaux : ${metadata.channels || "N/A"}
+│ 🌈 Couleur : ${metadata.space || "N/A"}
+│ 🪶 Alpha : ${metadata.hasAlpha ? "Oui 💖" : "Non"}
+│ ⚡ Compression : ${metadata.compression || "N/A"}
+│ 🔄 Orientation EXIF : ${metadata.orientation || "N/A"}
+│ ✨ Progressif : ${metadata.isProgressive ? "Oui" : "Non"}
+├────────────────
+│ 💖 Angel system by Shade
+╰───────────────✦`;
 
     await api.sendMessage(
       {
@@ -100,7 +108,7 @@ module.exports.onStart = async ({ api, event }) => {
   } catch (err) {
     console.error(err);
     return api.sendMessage(
-      "⚠️ Oups ! Une erreur est survenue.\n💬 Veuillez réessayer plus tard !",
+      "💔✨ Oops… Angel system encountered an error.\n🌸 Please try again later.",
       event.threadID,
       event.messageID
     );
