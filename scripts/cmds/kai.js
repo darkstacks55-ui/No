@@ -212,7 +212,7 @@ ${text}
 
     const sent = await message.reply(finalMsg);
 
-    api.setMessageReaction("🛐", event.messageID, () => {}, true);
+    api.setMessageReaction("💡", event.messageID, () => {}, true);
 
     global.GoatBot.onReply.set(sent.messageID, {
       commandName: "kai",
@@ -237,7 +237,7 @@ module.exports = {
     version: 'KAI-3.0',
     author: 'Shade',
     role: 0,
-    category: 'ai'
+    category: '🤖 ai'
   },
 
   // 🌸 PREFIX
