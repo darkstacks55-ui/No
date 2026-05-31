@@ -4,87 +4,103 @@ const fs = require("fs-extra");
 module.exports = {
 	config: {
 		name: "ignoreonlyad",
-		aliases: ["ignoreadonly", "ignoreonlyadmin", "ignoreadminonly"],
-		version: "1.2",
-		author: "NTKhang",
+		aliases: ["ignoreadonly", "ignoreonlyadmin", "ign"],
+		version: "✨ 2.0 angel kawaii",
+		author: "Shade ✨ Angel Edit",
 		countDown: 5,
 		role: 3,
+		shortDescription: "🌸 Autoriser des commandes en adminOnly",
+		category: "system",
 		description: {
-			vi: "Bỏ qua lệnh trong adminonly (khi bật adminonly, các lệnh được thêm từ lệnh này người dùng vẫn có thể sử dụng)",
-			en: "Ignore command in adminonly (when turn on adminonly, user can use command added from this command)"
+			en: "Manage commands that bypass adminOnly mode 💫"
 		},
-		category: "owner",
 		guide: {
-			vi: "   {pn} add <commandName>: Thêm lệnh vào danh sách bỏ qua"
-				+ "\n   {pn} del <commandName>: Xóa lệnh khỏi danh sách bỏ qua"
-				+ "\n   {pn} list: Xem danh sách lệnh bỏ qua",
-			en: "   {pn} add <commandName>: Add command to ignore list"
-				+ "\n   {pn} del <commandName>: Remove command from ignore list"
-				+ "\n   {pn} list: View ignore list"
+			en:
+				"🌸 {pn} add <command>\n" +
+				"❌ {pn} del <command>\n" +
+				"📜 {pn} list"
 		}
 	},
 
 	langs: {
-		vi: {
-			missingCommandNameToAdd: "⚠️ Vui lòng nhập tên lệnh bạn muốn thêm vào danh sách bỏ qua",
-			missingCommandNameToDelete: "⚠️ Vui lòng nhập tên lệnh bạn muốn xóa khỏi danh sách bỏ qua",
-			commandNotFound: "❌ Không tìm thấy lệnh \"%1\" trong danh sách lệnh của bot",
-			commandAlreadyInList: "❌ Lệnh \"%1\" đã có trong danh sách bỏ qua",
-			commandAdded: "✅ Đã thêm lệnh \"%1\" vào danh sách bỏ qua",
-			commandNotInList: "❌ Lệnh \"%1\" không có trong danh sách bỏ qua",
-			commandDeleted: "✅ Đã xóa lệnh \"%1\" khỏi danh sách bỏ qua",
-			ignoreList: "📑 Danh sách lệnh bỏ qua trong adminonly:\n%1"
-		},
 		en: {
-			missingCommandNameToAdd: "⚠️ Please enter the command name you want to add to the ignore list",
-			missingCommandNameToDelete: "⚠️ Please enter the command name you want to delete from the ignore list",
-			commandNotFound: "❌ Command \"%1\" not found in bot's command list",
-			commandAlreadyInList: "❌ Command \"%1\" already in ignore list",
-			commandAdded: "✅ Added command \"%1\" to ignore list",
-			commandNotInList: "❌ Command \"%1\" not in ignore list",
-			commandDeleted: "✅ Removed command \"%1\" from ignore list",
-			ignoreList: "📑 Ignore list in adminonly:\n%1"
+			missingAdd: "🌸✨ Please enter a command to add 💔",
+			missingDel: "💔✨ Please enter a command to remove",
+			notFound: "❌✨ Command \"%1\" not found",
+			already: "💖✨ \"%1\" is already in the angel ignore list",
+			added: "🌸✨ Command \"%1\" is now FREE from adminOnly 💖",
+			notIn: "💔✨ \"%1\" is not in the list",
+			removed: "🧹✨ Command \"%1\" removed from angel list 💖",
+			list: "🌸✨ IGNORE LIST (adminOnly bypass):\n\n%1"
 		}
 	},
 
-	onStart: async function ({ args, message, getLang }) {
-		switch (args[0]) {
-			case "add": {
+	onStart: async function ({ args, message, getLang, event, api }) {
+
+		try {
+			const action = args[0];
+
+			// 🌸 ADD
+			if (action === "add") {
+				api.setMessageReaction("⏳", event.messageID);
+
 				if (!args[1])
-					return message.reply(getLang("missingCommandNameToAdd"));
-				const commandName = args[1].toLowerCase();
-				const command = global.GoatBot.commands.get(commandName);
+					return message.reply(getLang("missingAdd"));
+
+				const cmd = args[1].toLowerCase();
+				const command = global.GoatBot.commands.get(cmd);
+
 				if (!command)
-					return message.reply(getLang("commandNotFound", commandName));
-				if (ignoreList.includes(commandName))
-					return message.reply(getLang("commandAlreadyInList", commandName));
-				ignoreList.push(commandName);
+					return message.reply(getLang("notFound", cmd));
+
+				if (ignoreList.includes(cmd))
+					return message.reply(getLang("already", cmd));
+
+				ignoreList.push(cmd);
 				fs.writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
-				return message.reply(getLang("commandAdded", commandName));
+
+				api.setMessageReaction("✅", event.messageID);
+				return message.reply(getLang("added", cmd));
 			}
-			case "del":
-			case "delete":
-			case "remove":
-			case "rm":
-			case "-d": {
+
+			// 🧹 DELETE
+			if (action === "del" || action === "remove" || action === "rm") {
+				api.setMessageReaction("⏳", event.messageID);
+
 				if (!args[1])
-					return message.reply(getLang("missingCommandNameToDelete"));
-				const commandName = args[1].toLowerCase();
-				const command = global.GoatBot.commands.get(commandName);
+					return message.reply(getLang("missingDel"));
+
+				const cmd = args[1].toLowerCase();
+				const command = global.GoatBot.commands.get(cmd);
+
 				if (!command)
-					return message.reply(getLang("commandNotFound", commandName));
-				if (!ignoreList.includes(commandName))
-					return message.reply(getLang("commandNotInList", commandName));
-				ignoreList.splice(ignoreList.indexOf(commandName), 1);
+					return message.reply(getLang("notFound", cmd));
+
+				if (!ignoreList.includes(cmd))
+					return message.reply(getLang("notIn", cmd));
+
+				ignoreList.splice(ignoreList.indexOf(cmd), 1);
 				fs.writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
-				return message.reply(getLang("commandDeleted", commandName));
+
+				api.setMessageReaction("✅", event.messageID);
+				return message.reply(getLang("removed", cmd));
 			}
-			case "list": {
-				return message.reply(getLang("ignoreList", ignoreList.join(", ")));
+
+			// 📜 LIST
+			if (action === "list") {
+				if (!ignoreList.length)
+					return message.reply("🌸✨ Empty angel list 💔");
+
+				return message.reply(
+					getLang("list", ignoreList.map(e => "✨ " + e).join("\n"))
+				);
 			}
-			default: {
-				return message.SyntaxError();
-			}
+
+			return message.SyntaxError();
+
+		} catch (e) {
+			console.error(e);
+			return message.reply("💔✨ An error occurred in angel system...");
 		}
 	}
 };
