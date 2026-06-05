@@ -12,7 +12,7 @@ module.exports = {
 		role: 0,
 		shortDescription: "💖 Pinterest-style image grid viewer",
 		longDescription: "🌸 Affiche une grille d'images comme Pinterest et permet sélection U1-U35",
-		category: "🌸 générateur d'images",
+		category: "générateur d'images",
 		guide: "{p}pin <recherche> <nombre max 1-35>"
 	},
 
