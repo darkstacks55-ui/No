@@ -17,7 +17,6 @@ module.exports = {
 
   onStart: async function ({ api, message, event }) {
     try {
-
       const reply = event.messageReply;
 
       if (!reply?.attachments?.length) {
@@ -26,23 +25,22 @@ module.exports = {
 
       const imgurl = reply.attachments[0].url;
 
-      // ⏳ reaction
       api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
       const waitMsg = await message.reply("💖✨ Upscaling en cours...");
 
-      const apiUrl = `https://free-goat-api.onrender.com/4k?url=${encodeURIComponent(imgurl)}`;
+      // 🔥 TON API ICI
+      const apiUrl = `https://api-4k.onrender.com/4k?url=${encodeURIComponent(imgurl)}`;
 
-      const res = await axios.get(apiUrl).catch(() => null);
+      const res = await axios.get(apiUrl);
 
-      const imageLink = res?.data?.image || res?.data?.url || res?.data?.result;
+      const imageLink = res?.data?.url;
 
       if (!imageLink) {
         api.setMessageReaction("❌", event.messageID, () => {}, true);
         return message.reply("❌💔 API ne renvoie pas d’image valide...");
       }
 
-      // téléchargement safe
       const imgBuffer = await axios.get(imageLink, {
         responseType: "arraybuffer"
       });
@@ -50,7 +48,7 @@ module.exports = {
       api.setMessageReaction("✅", event.messageID, () => {}, true);
 
       await message.reply({
-        body: "✨💖 Voilà ton image 4K angelifiée ✨",
+        body: "✨💖 Voilà ton image 4K ✨",
         attachment: Buffer.from(imgBuffer.data)
       });
 
@@ -61,7 +59,7 @@ module.exports = {
     } catch (err) {
       console.error(err);
       api.setMessageReaction("❌", event.messageID, () => {}, true);
-      return message.reply("❌💔 Upscale failed (API ou réseau)");
+      return message.reply("❌💔 Upscale failed");
     }
   }
 };
