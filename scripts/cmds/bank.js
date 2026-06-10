@@ -3,7 +3,7 @@ module.exports = {
     name: "bank",
     aliases: ["economy", "eco"],
     version: "1.0",
-    author: "Shade,
+    author: "Shade",
     role: 0,
     category: "economy",
     longDescription: { en: "Complete economy system with banking, investments, gambling and more" },
