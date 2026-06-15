@@ -93,8 +93,8 @@ module.exports = {
         ctx.restore();
       }
 
-      circle(ctx, img1, 380, 40, 170);
-      circle(ctx, img2, 600, 200, 170);
+      circle(ctx, img1, 170, 100, 200);
+      circle(ctx, img2, 460, 100, 200);
 
       const file = path.join(__dirname, "angel_pair.png");
       const out = fs.createWriteStream(file);
