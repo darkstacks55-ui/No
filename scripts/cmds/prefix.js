@@ -20,7 +20,7 @@ module.exports.run = async function ({ api, event }) {
   const ctx = canvas.getContext("2d");
 
   // 🔮 Background image (ton image)
-  const background = await loadImage("https://files.catbox.moe/gcjsgw.jpg");
+  const background = await loadImage("https://files.catbox.moe/2xr9j4.jpg");
   ctx.drawImage(background, 0, 0, width, height);
 
   // 🌫 Overlay sombre violet
