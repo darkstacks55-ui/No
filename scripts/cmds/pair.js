@@ -73,7 +73,7 @@ module.exports = {
       const ctx = canvas.getContext("2d");
 
       // 🌸 Background kawaii
-      const bg = await loadImage("https://files.catbox.moe/29jl5s.jpg");
+      const bg = await loadImage("https://files.catbox.moe/hzapdg.jpg");
       ctx.drawImage(bg, 0, 0, width, height);
 
       const img1 = await loadImage(
