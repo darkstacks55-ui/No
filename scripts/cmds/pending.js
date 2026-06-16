@@ -1,75 +1,77 @@
-const pendingGroups = new Map(); // stock temporaire
+const fs = require("fs");
+const path = require("path");
+const { createCanvas } = require("canvas");
 
+const cacheDir = path.join(__dirname, "cache");
+if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
+
+// 🎨 IMAGE
+function createPendingImage(list) {
+  const canvas = createCanvas(900, 500);
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#0d0d0d";
+  ctx.fillRect(0, 0, 900, 500);
+
+  ctx.strokeStyle = "#00ffcc";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(20, 20, 860, 460);
+
+  ctx.fillStyle = "#00ffcc";
+  ctx.font = "bold 40px Arial";
+  ctx.fillText("📋 PENDING LIST", 260, 80);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "20px Arial";
+  ctx.fillText(`Total: ${list.length}`, 50, 130);
+
+  let y = 180;
+  list.slice(0, 6).forEach((g, i) => {
+    ctx.fillText(`${i + 1}. ${g.name}`, 60, y);
+    ctx.fillText(`ID: ${g.id}`, 60, y + 20);
+    y += 60;
+  });
+
+  const file = path.join(cacheDir, `pending_${Date.now()}.png`);
+  fs.writeFileSync(file, canvas.toBuffer());
+  return file;
+}
+
+// 📦 CONFIG
 module.exports.config = {
   name: "pending",
-  version: "1.0.0",
+  version: "1.0",
   role: 2,
   author: "Shade",
-  description: "Pending list + approve via reply g1 g2 c1",
-  category: "owern"
+  category: "owner"
 };
 
-module.exports.onLoad = () => {
-  console.log("Pending system loaded");
-};
-
+// 📋 AFFICHER LISTE
 module.exports.run = async function ({ api, event }) {
   const { threadID, messageID } = event;
 
-  // Exemple: récupération fake des groupes en attente
   const groups = global.pendingThreads || [];
 
-  if (groups.length === 0) {
+  if (!groups.length)
     return api.sendMessage("📋 Aucun groupe en attente.", threadID, messageID);
-  }
 
-  let msg = `📋 »「𝗣𝗘𝗡𝗗𝗜𝗡𝗚 𝗟𝗜𝗦𝗧」«\n`;
-  msg += `┣✦ 𝗧𝗼𝘁𝗮𝗹 𝘁𝗵𝗿𝗲𝗮𝗱𝘀: ${groups.length}\n`;
-  msg += `┣✦ 𝗥𝗲𝗽𝗹𝘆 𝘄𝗶𝘁𝗵 𝗴1, g2... 𝘁𝗼 𝗮𝗽𝗽𝗿𝗼𝘃𝗲\n`;
-  msg += `┣✦ 𝗨𝘀𝗲 c1, c2... 𝘁𝗼 𝗰𝗮𝗻𝗰𝗲𝗹\n`;
-  msg += `┗━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  const img = createPendingImage(groups);
 
-  groups.forEach((g, i) => {
-    msg += `┣ ${i + 1}. ${g.name}\n`;
-    msg += `┗ 𝗜𝗗: ${g.id}\n`;
-  });
+  const msg =
+`📋 » PENDING SYSTEM «
+━━━━━━━━━━━━
+g1 g2 → approve
+c1 c2 → cancel
+━━━━━━━━━━━━`;
 
-  return api.sendMessage(msg, threadID, (err, info) => {
-    global.pendingReply = {
-      messageID: info.messageID,
-      groups
-    };
-  });
-};
-
-// 🔥 LISTENER REPLY
-module.exports.handleReply = async function ({ api, event }) {
-  const { body, threadID } = event;
-
-  if (!global.pendingReply) return;
-
-  const match = body.match(/([gc])(\d+)/i);
-  if (!match) return;
-
-  const action = match[1]; // g ou c
-  const index = parseInt(match[2]) - 1;
-
-  const group = global.pendingReply.groups[index];
-  if (!group) return api.sendMessage("❌ Groupe introuvable.", threadID);
-
-  if (action.toLowerCase() === "g") {
-    // APPROVE
-    return api.sendMessage(
-      `✅ Groupe APPROUVÉ : ${group.name}`,
-      threadID
-    );
-  }
-
-  if (action.toLowerCase() === "c") {
-    // CANCEL
-    return api.sendMessage(
-      `❌ Groupe REFUSÉ : ${group.name}`,
-      threadID
-    );
-  }
+  api.sendMessage(
+    { body: msg, attachment: fs.createReadStream(img) },
+    threadID,
+    (err, info) => {
+      global.pendingReply = {
+        messageID: info.messageID,
+        groups
+      };
+    }
+  );
 };
