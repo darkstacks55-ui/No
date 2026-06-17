@@ -15,36 +15,42 @@ module.exports = {
     cooldowns: 2
   },
 
-  // 1. On intègre Currencies dans les paramètres d'entrée
-  onStart: async function ({ api, event, Currencies }) {
+  onStart: async function (mainParam) {
+    const { api, event } = mainParam;
     const { threadID, messageID, senderID } = event;
 
-    try {
-      // 2. Récupération des données économiques de l'utilisateur
-      let userData = await Currencies.getData(senderID);
+    // Détection automatique du module d'économie du bot
+    const CurrenciesModel = mainParam.Currencies || global.client?.Currencies || global.Currencies;
 
-      // Si l'utilisateur n'existe pas encore dans l'économie
+    if (!CurrenciesModel) {
+      return api.sendMessage("❌ Impossible de charger le système d'économie du bot.", threadID, messageID);
+    }
+
+    try {
+      // Récupération des données de l'utilisateur
+      let userData = await CurrenciesModel.getData(senderID);
+
       if (!userData) {
-        await Currencies.setData(senderID, { money: 1000 });
+        await CurrenciesModel.setData(senderID, { money: 1000 });
         userData = { money: 1000 };
       }
 
       const money = userData.money || 0;
       const name = senderID;
 
-      // 3. Récupération de tout le classement
-      const allData = await Currencies.getAll(['money']);
-
+      // Récupération du classement complet
+      const allData = await CurrenciesModel.getAll(['money']);
+      
       const sorted = (allData || [])
         .map(u => ({
-          id: u.userID,
+          id: u.userID || u.id,
           money: u.money || 0
         }))
         .sort((a, b) => b.money - a.money);
 
       const rank = sorted.findIndex(u => u.id === senderID) + 1;
 
-      // --- Génération du visuel Canvas ---
+      // --- Dessin du Canvas ---
       const width = 850, height = 540;
       const canvas = createCanvas(width, height);
       const ctx = canvas.getContext("2d");
@@ -69,7 +75,7 @@ module.exports = {
       ctx.font = "bold 22px Arial";
       ctx.fillText(`RANK #${rank || 'N/A'}`, 590, 435);
 
-      // Chargement sécurisé de l'avatar
+      // Chargement de l'avatar Facebook
       try {
         const avatar = await loadImage(
           `https://graph.facebook.com/${senderID}/picture?width=256&height=256`
@@ -81,7 +87,11 @@ module.exports = {
         ctx.drawImage(avatar, 665, 285, 70, 70);
         ctx.restore();
       } catch (e) {
-        console.log("Impossible de charger l'avatar Facebook");
+        // En cas d'échec de l'avatar, on dessine un cercle vide pour éviter le crash
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(700, 320, 35, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       const cacheDir = path.join(__dirname, "cache");
@@ -101,7 +111,7 @@ module.exports = {
 
     } catch (error) {
       console.error(error);
-      return api.sendMessage(`Une erreur est survenue : ${error.message}`, threadID, messageID);
+      return api.sendMessage(`Erreur interne : ${error.message}`, threadID, messageID);
     }
   }
 };
