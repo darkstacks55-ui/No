@@ -2,110 +2,94 @@ const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
 const path = require("path");
 
-module.exports.config = {
-  name: "balance",
-  aliases: ["bal", "$", "cash"],
-  version: "1.1.0",
-  hasPermssion: 0,
-  credits: "Meta AI",
-  description: "Balance style carte bancaire",
-  commandCategory: "economy",
-  usages: "/bal",
-  cooldowns: 2
-};
+module.exports = {
+  config: {
+    name: "balance",
+    aliases: ["bal", "$", "cash"],
+    version: "1.1.0",
+    hasPermssion: 0,
+    credits: "Meta AI",
+    description: "Balance style carte bancaire",
+    commandCategory: "economy",
+    usages: "/bal",
+    cooldowns: 2
+  },
 
-module.exports.onStart = async function({ api, event, Currencies, Users }) {
-  const { threadID, messageID, senderID } = event;
+  onStart: async function ({ api, event, Currencies, Users }) {
+    const { threadID, messageID, senderID } = event;
 
-  const userData = await Currencies.getData(senderID);
-  const money = userData.money || 0;
-  const name = await Users.getNameUser(senderID);
+    const userData = await Currencies.getData(senderID);
+    const money = userData.money || 0;
+    const name = await Users.getNameUser(senderID);
 
-  const allData = await Currencies.getAll();
-  const sorted = allData.sort((a, b) => b.money - a.money);
-  const rank = sorted.findIndex(u => u.userID === senderID) + 1;
-  const total = sorted.length;
+    const allData = await Currencies.getAll();
+    const sorted = allData.sort((a, b) => b.money - a.money);
+    const rank = sorted.findIndex(u => u.userID === senderID) + 1;
 
-  const width = 850, height = 540;
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext("2d");
+    const width = 850, height = 540;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
 
-  // Fond bleu nuit
-  ctx.fillStyle = "#0b0e14";
-  ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = "#0b0e14";
+    ctx.fillRect(0, 0, width, height);
 
-  // Carte bancaire
-  ctx.fillStyle = "#1a1e27";
-  ctx.roundRect(100, 140, 650, 400, 24);
-  ctx.fill();
+    ctx.fillStyle = "#1a1e27";
+    ctx.roundRect(100, 140, 650, 400, 24);
+    ctx.fill();
 
-  // Bordure subtile
-  ctx.strokeStyle = "#2d313b";
-  ctx.lineWidth = 2;
-  ctx.stroke();
+    ctx.strokeStyle = "#2d313b";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-  // Puce carte
-  ctx.fillStyle = "#d4af37";
-  ctx.roundRect(160, 190, 80, 60, 8);
-  ctx.fill();
+    ctx.fillStyle = "#d4af37";
+    ctx.roundRect(160, 190, 80, 60, 8);
+    ctx.fill();
 
-  ctx.strokeStyle = "#b8932e";
-  ctx.beginPath();
-  ctx.moveTo(160, 210); ctx.lineTo(240, 210);
-  ctx.moveTo(160, 230); ctx.lineTo(240, 230);
-  ctx.stroke();
+    ctx.fillStyle = "#e5e7eb";
+    ctx.font = "bold 48px Arial";
+    ctx.fillText("•••• •••• ••••", 160, 310);
 
-  // Argent
-  ctx.fillStyle = "#e5e7eb";
-  ctx.font = "bold 48px Arial";
-  ctx.fillText("•••• •••• ••••", 160, 310);
+    ctx.font = "bold 56px Arial";
+    ctx.fillText(`${money.toLocaleString()} $`, 160, 370);
 
-  ctx.font = "bold 56px Arial";
-  ctx.fillText(`${money.toLocaleString()} $`, 160, 370);
+    ctx.fillStyle = "#9ca3af";
+    ctx.font = "24px Arial";
+    ctx.fillText(name.toUpperCase(), 160, 450);
 
-  // Nom
-  ctx.fillStyle = "#9ca3af";
-  ctx.font = "24px Arial";
-  ctx.fillText(name.toUpperCase(), 160, 450);
+    ctx.fillStyle = rank <= 3 ? "#f5c542" : "#22c55e";
+    ctx.roundRect(560, 410, 140, 40, 12);
+    ctx.fill();
 
-  // Rank
-  ctx.fillStyle = rank <= 3 ? "#f5c542" : "#22c55e";
-  ctx.roundRect(560, 410, 140, 40, 12);
-  ctx.fill();
+    ctx.fillStyle = "#0b0e14";
+    ctx.font = "bold 22px Arial";
+    ctx.fillText(`RANK #${rank}`, 590, 435);
 
-  ctx.fillStyle = "#0b0e14";
-  ctx.font = "bold 22px Arial";
-  ctx.fillText(`RANK #${rank}`, 590, 435);
+    ctx.font = "bold 42px Arial";
+    ctx.fillText("💳", 660, 200);
 
-  // Emoji
-  ctx.font = "bold 42px Arial";
-  ctx.fillText("💳", 660, 200);
+    const avatar = await loadImage(
+      `https://graph.facebook.com/${senderID}/picture?width=256&height=256`
+    );
 
-  // Avatar
-  const avatar = await loadImage(
-    `https://graph.facebook.com/${senderID}/picture?width=256&height=256&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
-  );
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(700, 320, 35, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(avatar, 665, 285, 70, 70);
+    ctx.restore();
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(700, 320, 35, 0, Math.PI * 2);
-  ctx.clip();
-  ctx.drawImage(avatar, 665, 285, 70, 70);
-  ctx.restore();
+    const cacheDir = path.join(__dirname, "cache");
+    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
 
-  const cacheDir = path.join(__dirname, "cache");
-  if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+    const pathSave = path.join(cacheDir, `bal_${senderID}.png`);
 
-  const pathSave = path.join(cacheDir, `bal_${senderID}.png`);
+    fs.writeFileSync(pathSave, canvas.toBuffer("image/png"));
 
-  fs.writeFileSync(pathSave, canvas.toBuffer("image/png"));
-
-  return api.sendMessage(
-    {
-      attachment: fs.createReadStream(pathSave)
-    },
-    threadID,
-    () => fs.unlinkSync(pathSave),
-    messageID
-  );
+    return api.sendMessage(
+      { attachment: fs.createReadStream(pathSave) },
+      threadID,
+      () => fs.unlinkSync(pathSave),
+      messageID
+    );
+  }
 };
