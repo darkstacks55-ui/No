@@ -371,14 +371,7 @@ module.exports = {
     attachment: fs.createReadStream(imgPath)
   }, () => fs.unlinkSync(imgPath));
       }
-  await usersData.set(senderID, userData);
-
-  return message.reply({
-    body: `🚨 TU ES GRILLÉ 😌\n\n👮 Et oui le mal finit toujours par perdre 😌.\n💸 Amende : ${format(fine)}\n💰 Portefeuille : ${format(bank.wallet)}`,
-    attachment: fs.createReadStream(imgPath)
-  }, () => fs.unlinkSync(imgPath));
-      }
-
+      
       const stolen = Math.floor(targetMoney * (Math.random() * 0.3 + 0.1));
 
       target.bank.wallet -= stolen;
