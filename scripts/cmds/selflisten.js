@@ -4,13 +4,13 @@ const path = require("path");
 module.exports = {
   config: {
     name: "sl",
-    aliases: ["selfListen"],
+    aliases: ["selflisten"],
     version: "2.0",
-    author: "Christus",
-    role: 3,
+    author: "Shade",
+    role: 2,
     shortDescription: "Activer/Désactiver selfListen",
     longDescription: "Active ou désactive le self-listen du bot sans le redémarrer",
-    category: "owner",
+    category: "admin",
     guide: "/sl on | /sl off"
   },
 
