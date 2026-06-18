@@ -21,10 +21,10 @@ function formatCategory(cat) {
     images: "🎨 IMAGES",
     media: "🎵 MÉDIA",
     game: "🎮 GAMES",
-    utility: "⚙️ UTILITAIRES",
+    utility: "📜 UTILITAIRES",
     download: "📦 DOWNLOAD",
     security: "🔒 SÉCURITÉ",
-    info: "📜 INFO",
+    settings: "⚙️ CONFIG",
     other: "❓ AUTRE"
   };
 
