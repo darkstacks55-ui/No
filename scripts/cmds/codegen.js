@@ -6,7 +6,7 @@ module.exports = {
     version: "1.1.1",
     author: "Shade",
     countDown: 5,
-    role: 2, // Réservé aux administrateurs (Owner) du bot
+    role: 0, 
     shortDescription: { en: "Génère le code d'une commande via OpenAI" },
     category: "utility",
     guide: { en: "codegen [description]" }
