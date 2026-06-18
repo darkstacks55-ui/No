@@ -4,7 +4,7 @@ module.exports = {
 		version: "1.4",
 		author: "Shade ✨ Angel Edit",
 		role: 2,
-		category: "box chat",
+		category: "admin",
 		description: {
 			en: "🌸 Angel kick avec système de confirmation"
 		}
