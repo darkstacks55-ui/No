@@ -5,7 +5,7 @@ module.exports = {
     author: "Shade",
     role: 4,
     shortDescription: "Message global admin",
-    category: "admin"
+    category: "settings"
   },
 
   onStart: async function ({ api, event, args, threadsData }) {
