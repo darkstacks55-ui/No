@@ -287,3 +287,193 @@ module.exports = {
                     return api.sendMessage(`ðŸš¨ Ã‰chec ! La police vous a arrÃªtÃ©. Vous payez une amende de ${fine} $. Votre rÃ©putation et score de crÃ©dit s'effondrent.`, threadID, messageID);
                 }
             }
+
+                case "invest": {
+                const category = args[1]?.toLowerCase(); // stocks, crypto, bonds
+                const action = args[2]?.toLowerCase();   // buy, sell
+                const amount = parseInt(args[3]);
+
+                const prices = { stocks: 150, crypto: 850, bonds: 500 };
+
+                if (!category || !prices[category]) {
+                    return api.sendMessage(`ðŸ“Š [ MARCHÃ‰ DES INVESTISSEMENTS ] ðŸ“Š\n` +
+                        `ðŸ“ˆ 1. STOCKS (Actions d'entreprises) : ${prices.stocks} $ /unitÃ© [bank invest stocks buy/sell]\n` +
+                        `ðŸª™ 2. CRYPTO (Actifs volatiles) : ${prices.crypto} $ /unitÃ© [bank invest crypto buy/sell]\n` +
+                        `ðŸ“œ 3. BONDS (Obligations d'Ã‰tat stables) : ${prices.bonds} $ /unitÃ© [bank invest bonds buy/sell]\n\n` +
+                        `Vos Actifs : Stocks: ${eco.investments.stocks} | Crypto: ${eco.investments.crypto} | Bonds: ${eco.investments.bonds}`, threadID, messageID);
+                }
+
+                if (action === "buy") {
+                    if (isNaN(amount) || amount <= 0) return api.sendMessage("âš ï¸ SpÃ©cifiez un nombre d'unitÃ©s valide Ã  acheter.", threadID, messageID);
+                    let totalCost = prices[category] * amount;
+                    if (eco.cash < totalCost) return api.sendMessage(`âŒ Cash insuffisant. Il vous faut ${totalCost} $.`, threadID, messageID);
+
+                    eco.cash -= totalCost;
+                    eco.investments[category] += amount;
+                    addHistory("Investissement", -totalCost, `Achat de ${amount} ${category}`);
+                    await usersData.set(senderID, userData);
+                    return api.sendMessage(`ðŸ“ˆ Achat effectuÃ© ! Vous possÃ©dez maintenant ${eco.investments[category]} unitÃ©s de ${category}.`, threadID, messageID);
+                } 
+                else if (action === "sell") {
+                    if (isNaN(amount) || amount <= 0) return api.sendMessage("âš ï¸ SpÃ©cifiez un nombre d'unitÃ©s valide Ã  vendre.", threadID, messageID);
+                    if (eco.investments[category] < amount) return api.sendMessage("âŒ Vous ne possÃ©dez pas autant d'unitÃ©s.", threadID, messageID);
+
+                    // Simulation d'une fluctuation de marchÃ© Ã  la revente (-20% Ã  +35%)
+                    const fluctuation = (Math.random() * (1.35 - 0.80) + 0.80);
+                    let payout = Math.floor((prices[category] * amount) * fluctuation);
+
+                    eco.investments[category] -= amount;
+                    eco.cash += payout;
+                    addHistory("DÃ©sinvestissement", payout, `Vente de ${amount} ${category}`);
+                    await usersData.set(senderID, userData);
+                    return api.sendMessage(`ðŸ“‰ Vente finalisÃ©e ! Le cours du marchÃ© a valorisÃ© vos actifs Ã  un prix total de ${payout} $ (Cash crÃ©ditÃ©).`, threadID, messageID);
+                } else {
+                    return api.sendMessage("âš ï¸ PrÃ©cisez l'action : `buy` ou `sell`.", threadID, messageID);
+                }
+            }
+
+            case "business": {
+                const action = args[1]?.toLowerCase();
+                if (!eco.business) eco.business = { owned: false, name: "", level: 0, lastCollect: 0 };
+
+                if (!action) {
+                    if (!eco.business.owned) {
+                        return api.sendMessage("ðŸ¢ Vous ne possÃ©dez aucun commerce. Tapez `bank business setup [Nom]` pour lancer une Startup pour 15,000 $.", threadID, messageID);
+                    }
+                    const passiveIncome = eco.business.level * 450;
+                    return api.sendMessage(`ðŸ¢ [ GESTION ENTREPRISE : ${eco.business.name.toUpperCase()} ] ðŸ¢\n` +
+                        `ðŸ“ˆ Niveau : ${eco.business.level}\n` +
+                        `ðŸ’¸ Revenu passif gÃ©nÃ©rÃ© : ${passiveIncome} $ / cycle\n` +
+                        `âš™ï¸ Actions disponibles : \n` +
+                        `- \`bank business upgrade\` (CoÃ»t : ${eco.business.level * 8000} $)\n` +
+                        `- \`bank business collect\` (RÃ©cupÃ©rer les dividendes)`, threadID, messageID);
+                }
+
+                if (action === "setup") {
+                    const bizName = args.slice(2).join(" ");
+                    if (!bizName) return api.sendMessage("âš ï¸ Donnez un nom Ã  votre entreprise.", threadID, messageID);
+                    if (eco.business.owned) return api.sendMessage("âŒ Vous possÃ©dez dÃ©jÃ  une entreprise.", threadID, messageID);
+                    if (eco.cash < 15000) return api.sendMessage("âŒ La crÃ©ation d'une franchise requiert 15 000 $ en liquide.", threadID, messageID);
+
+                    eco.cash -= 15000;
+                    eco.business = { owned: true, name: bizName, level: 1, lastCollect: Date.now() };
+                    addHistory("Business", -15000, `Fondation de ${bizName}`);
+                    await usersData.set(senderID, userData);
+                    return api.sendMessage(`ðŸŽ‰ FÃ©licitations ! Votre entreprise "${bizName}" est ouverte. Elle gÃ©nÃ¨re des revenus passifs.`, threadID, messageID);
+                }
+
+                if (action === "upgrade") {
+                    if (!eco.business.owned) return api.sendMessage("âŒ Vous n'avez pas de business.", threadID, messageID);
+                    let cost = eco.business.level * 8000;
+                    if (eco.cash < cost) return api.sendMessage(`âŒ AmÃ©lioration impossible. Il vous faut ${cost} $.`, threadID, messageID);
+
+                    eco.cash -= cost;
+                    eco.business.level += 1;
+                    await usersData.set(senderID, userData);
+                    return api.sendMessage(`ðŸš€ Votre entreprise passe au Niveau ${eco.business.level} ! Les revenus augmentent.`, threadID, messageID);
+                }
+
+                if (action === "collect") {
+                    if (!eco.business.owned) return api.sendMessage("âŒ Vous n'avez pas de business.", threadID, messageID);
+                    const now = Date.now();
+                    const elapsed = now - eco.business.lastCollect;
+                    
+                    if (elapsed < 7200000) { // 2 heures d'intervalle minimum pour collecter
+                        return api.sendMessage("â³ Le chiffre d'affaires n'est pas encore consolidÃ©. Attendez 2 heures.", threadID, messageID);
+                    }
+
+                    const revenue = eco.business.level * 450;
+                    eco.bank += revenue;
+                    eco.business.lastCollect = now;
+                    addHistory("Revenus", revenue, `Dividendes de ${eco.business.name}`);
+                    await usersData.set(senderID, userData);
+                    return api.sendMessage(`ðŸ’° BÃ©nÃ©fices collectÃ©s ! ${revenue} $ ont Ã©tÃ© directement dÃ©posÃ©s sur votre compte en banque.`, threadID, messageID);
+                }
+            }
+
+            case "property": {
+                const action = args[1]?.toLowerCase();
+                const catalog = {
+                    studio: { name: "Studio en Ville", price: 35000, rent: 800 },
+                    villa: { name: "Villa CotiÃ¨re", price: 120000, rent: 3200 }
+                };
+
+                if (!action) {
+                    return api.sendMessage(`ðŸ  [ AGENCE IMMOBILIÃˆRE ] ðŸ \n` +
+                        `1. \`studio\` - Studio en Ville : 35 000 $ (Loyer rapportÃ© : 800$/cycle)\n` +
+                        `2. \`villa\` - Villa CotiÃ¨re : 120 000 $ (Loyer rapportÃ© : 3200$/cycle)\n\n` +
+                        `Usage: \`bank property buy [studio/villa]\` ou \`bank property collect\` pour vos loyers.`, threadID, messageID);
+                }
+
+                if (action === "buy") {
+                    const type = args[2]?.toLowerCase();
+                    if (!catalog[type]) return api.sendMessage("âŒ PropriÃ©tÃ© invalide (choisissez studio ou villa).", threadID, messageID);
+                    if (eco.cash < catalog[type].price) return api.sendMessage("âŒ Financement refusÃ© : Fonds liquides insuffisants.", threadID, messageID);
+
+                    eco.cash -= catalog[type].price;
+                    if (!eco.properties) eco.properties = [];
+                    eco.properties.push({ type, purchasedAt: Date.now(), lastCollected: Date.now() });
+
+                    addHistory("Immobilier", -catalog[type].price, `Achat immo: ${catalog[type].name}`);
+                    await usersData.set(senderID, userData);
+                    return api.sendMessage(`ðŸ”‘ Titre de propriÃ©tÃ© signÃ© ! Vous Ãªtes propriÃ©taire de : ${catalog[type].name}.`, threadID, messageID);
+                }
+
+                if (action === "collect") {
+                    if (!eco.properties || eco.properties.length === 0) return api.sendMessage("âŒ Aucun bien immobilier locatif en votre possession.", threadID, messageID);
+                    
+                    const now = Date.now();
+                    let totalRent = 0;
+                    let updatedCount = 0;
+
+                    eco.properties.forEach(prop => {
+                        if (now - prop.lastCollected >= 14400000) { // 4 heures requises
+                            totalRent += catalog[prop.type].rent;
+                            prop.lastCollected = now;
+                            updatedCount++;
+                        }
+                    });
+
+                    if (totalRent === 0) return api.sendMessage("â³ Vos locataires ont dÃ©jÃ  payÃ© leur terme. Revenez plus tard (4h d'intervalle requis).", threadID, messageID);
+
+                    eco.bank += totalRent;
+                    addHistory("Loyer", totalRent, `Perception loyers de ${updatedCount} biens`);
+                    await usersData.set(senderID, userData);
+                    return api.sendMessage(`ðŸ’µ Gestion locative : Vous encaissez ${totalRent} $ de loyers en banque.`, threadID, messageID);
+                }
+            }
+
+            case "shop": {
+                const action = args[1]?.toLowerCase();
+                const shopItems = {
+                    sportscar: { name: "Supercar Sportive ðŸŽï¸", price: 75000, cat: "vehicles" },
+                    yacht: { name: "Yacht de Luxe ðŸ›³ï¸", price: 250000, cat: "luxury" },
+                    rolex: { name: "Montre en Or âŒš", price: 15000, cat: "luxury" }
+                };
+
+                if (!action) {
+                    return api.sendMessage(`ðŸ›ï¸ [ CONCESSIONNAIRE & LUXE ] ðŸ›ï¸\n` +
+                        `â€¢ \`sportscar\` : Concessionnaire Supercar - 75 000 $\n` +
+                        `â€¢ \`yacht\` : Yacht Yacht-Club Prestige - 250 000 $\n` +
+                        `â€¢ \`rolex\` : Montre de collection - 15 000 $\n\n` +
+                        `Acheter via: \`bank shop buy [item]\``, threadID, messageID);
+                }
+
+                if (action === "buy") {
+                    const choice = args[2]?.toLowerCase();
+                    if (!shopItems[choice]) return api.sendMessage("âŒ Article introuvable dans le catalogue.", threadID, messageID);
+                    if (eco.cash < shopItems[choice].price) return api.sendMessage("âŒ Transaction refusÃ©e : Fonds insuffisants.", threadID, messageID);
+
+                    eco.cash -= shopItems[choice].price;
+                    const category = shopItems[choice].cat;
+                    if (!eco.inventory[category]) eco.inventory[category] = [];
+                    eco.inventory[category].push(shopItems[choice].name);
+
+                    // Prestige boost sur la rÃ©putation
+                    eco.reputation = Math.min(200, eco.reputation + 20);
+
+                    addHistory("Achat Luxe", -shopItems[choice].price, `Acquisition de ${shopItems[choice].name}`);
+                    await usersData.set(senderID, userData);
+                    return api.sendMessage(`ðŸ’Ž SuccÃ¨s ! Vous venez d'acquÃ©rir votre ${shopItems[choice].name}. Votre statut social augmente !`, threadID, messageID);
+                }
+                        }
