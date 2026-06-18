@@ -2,7 +2,7 @@ module.exports = {
  config: {
   name: "settings",
   version: "1.0.4",
-  author: "Christus",
+  author: "Shade",
   countDown: 5,
   role: 2, // Seul le propriétaire du bot peut utiliser
   shortDescription: {
