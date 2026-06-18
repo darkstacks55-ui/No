@@ -18,7 +18,7 @@ module.exports = {
     author: "Shade",
     role: 0,
     shortDescription: "Réveiller le bot",
-    category: "system"
+    category: "admin"
   },
 
   onStart: async function ({ message, event }) {
