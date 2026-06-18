@@ -9,7 +9,7 @@ module.exports = {
 		countDown: 5,
 		role: 0,
 		shortDescription: "🌸 Ignore commands per group (adminOnly bypass)",
-		category: "owner",
+		category: "admin",
 		description: {
 			en: "Manage commands that bypass adminOnly mode per group 💫"
 		},
