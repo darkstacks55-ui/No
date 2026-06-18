@@ -173,3 +173,117 @@ module.exports = {
                 await usersData.set(senderID, userData);
                 return api.sendMessage(`ðŸ› ï¸ Vous avez travaillÃ© dur et touchÃ© un salaire de ${salary} $. Votre score de crÃ©dit s'amÃ©liore lÃ©gÃ¨rement.`, threadID, messageID);
             }
+
+                case "loan": {
+                const action = args[1]?.toLowerCase();
+                if (action === "request") {
+                    if (eco.loan > 0) return api.sendMessage(`âŒ Vous avez dÃ©jÃ  un prÃªt actif de ${eco.loan} $ Ã  rembourser d'abord.`, threadID, messageID);
+                    
+                    // Calcul de la capacitÃ© d'emprunt basÃ©e sur le credit score
+                    let maxLoan = Math.floor((eco.creditScore * 50));
+                    const amount = parseInt(args[2]);
+
+                    if (isNaN(amount) || amount <= 0 || amount > maxLoan) {
+                        return api.sendMessage(`âš ï¸ Montant invalide. BasÃ© sur votre score de crÃ©dit (${eco.creditScore}), votre limite d'emprunt est de ${maxLoan} $.`, threadID, messageID);
+                    }
+
+                    eco.loan = Math.floor(amount * 1.15); // 15% d'intÃ©rÃªts imposÃ©s
+                    eco.bank += amount;
+                    addHistory("PrÃªt", amount, "PrÃªt bancaire contractÃ© (+15% intÃ©rÃªt)");
+                    await usersData.set(senderID, userData);
+                    return api.sendMessage(`ðŸ›ï¸ PrÃªt accordÃ© ! ${amount} $ ajoutÃ©s Ã  votre banque. Vous devez rembourser un total de ${eco.loan} $.`, threadID, messageID);
+                } else {
+                    return api.sendMessage("âš ï¸ Utilisez: `bank loan request [montant]` pour demander un prÃªt.", threadID, messageID);
+                }
+            }
+
+            case "repay": {
+                const amountInput = args[1];
+                if (!eco.loan || eco.loan <= 0) return api.sendMessage("âŒ Vous n'avez aucune dette active.", threadID, messageID);
+                
+                let amount = amountInput === "all" ? eco.loan : parseInt(amountInput);
+                if (isNaN(amount) || amount <= 0) return api.sendMessage("âŒ Indiquez un montant valide.", threadID, messageID);
+                if (eco.cash < amount) return api.sendMessage("âŒ Vous n'avez pas assez de cash sur vous pour ce remboursement.", threadID, messageID);
+
+                if (amount > eco.loan) amount = eco.loan;
+
+                eco.cash -= amount;
+                eco.loan -= amount;
+
+                if (eco.loan === 0) {
+                    eco.creditScore = Math.min(850, eco.creditScore + 40); // Gros bonus de score si dette Ã©teinte
+                }
+
+                addHistory("Dette", -amount, "Remboursement prÃªt");
+                await usersData.set(senderID, userData);
+                return api.sendMessage(`âœ… Vous avez remboursÃ© ${amount} $. Dette restante : ${eco.loan} $. Your credit score updated.`, threadID, messageID);
+            }
+
+            case "leaderboard":
+            case "lb": {
+                // RÃ©cupÃ©ration globale simplifiÃ©e via le gestionnaire global de GoatBot
+                const allUsers = await usersData.getAll();
+                let leaders = [];
+
+                for (const u of allUsers) {
+                    if (u.data?.bankSystem) {
+                        const totalWorth = (u.data.bankSystem.cash || 0) + (u.data.bankSystem.bank || 0) + (u.data.bankSystem.vault || 0);
+                        leaders.push({ id: u.userID, name: u.name || `Utilisateur ${u.userID}`, total: totalWorth });
+                    }
+                }
+
+                leaders.sort((a, b) => b.total - a.total);
+                let lbText = "ðŸ† â”€â”€ [ LEADERBOARD DES PLUS RICHES ] â”€â”€ ðŸ†\n\n";
+                leaders.slice(0, 10).forEach((user, index) => {
+                    lbText += `${index + 1}. ${user.name} - ${user.total} $\n`;
+                });
+                return api.sendMessage(lbText, threadID, messageID);
+            }
+
+            case "rob": {
+                const targetID = args[1];
+                if (!targetID || targetID === senderID) return api.sendMessage("âš ï¸ SpÃ©cifiez l'ID d'une cible valide.", threadID, messageID);
+
+                const now = Date.now();
+                if (now - eco.lastRob < 3600000) {
+                    return api.sendMessage("â³ Votre jauge de suspicion est trop Ã©levÃ©e. Attendez 1 heure.", threadID, messageID);
+                }
+
+                let targetData = await usersData.get(targetID);
+                if (!targetData || !targetData.bankSystem) return api.sendMessage("âŒ Cible introuvable ou inactive financiÃ¨rement.", threadID, messageID);
+
+                let targetEco = targetData.bankSystem;
+                if (targetEco.cash < 200) return api.sendMessage("âŒ Cette cible est trop pauvre pour Ãªtre dÃ©troussÃ©e.", threadID, messageID);
+
+                eco.lastRob = now;
+                const successChance = Math.random();
+
+                if (successChance > 0.45) { // 55% de chance de rÃ©ussite
+                    const stolenCash = Math.floor(targetEco.cash * (Math.random() * (0.40 - 0.15) + 0.15));
+                    targetEco.cash -= stolenCash;
+                    eco.cash += stolenCash;
+                    eco.achievements.successfulRobs = (eco.achievements.successfulRobs || 0) + 1;
+                    eco.reputation = Math.max(0, eco.reputation - 15);
+
+                    addHistory("Vol (Auteur)", stolenCash, `Vol rÃ©ussi sur ${targetID}`);
+                    targetEco.history.unshift({
+                        date: new Date().toISOString().split('T')[0],
+                        type: "Vol (Victime)",
+                        amount: -stolenCash,
+                        details: `DÃ©troussÃ© par l'utilisateur ${senderID}`
+                    });
+
+                    await usersData.set(senderID, userData);
+                    await usersData.set(targetID, targetData);
+                    return api.sendMessage(`ðŸ¥· SuccÃ¨s ! Vous avez dÃ©valisÃ© ${stolenCash} $ des poches de la cible. Votre rÃ©putation baisse.`, threadID, messageID);
+                } else {
+                    // Ã‰chec du braquage : Amende et baisse drastique de rÃ©putation/crÃ©dit
+                    const fine = Math.floor(eco.cash * 0.20) || 100;
+                    eco.cash = Math.max(0, eco.cash - fine);
+                    eco.creditScore = Math.max(300, eco.creditScore - 50);
+                    eco.reputation = Math.max(0, eco.reputation - 25);
+
+                    await usersData.set(senderID, userData);
+                    return api.sendMessage(`ðŸš¨ Ã‰chec ! La police vous a arrÃªtÃ©. Vous payez une amende de ${fine} $. Votre rÃ©putation et score de crÃ©dit s'effondrent.`, threadID, messageID);
+                }
+            }
