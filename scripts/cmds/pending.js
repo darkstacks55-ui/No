@@ -3,7 +3,7 @@ const path = require("path");
 const { createCanvas } = require("canvas");
 
 const cacheDir = path.join(__dirname, "cache");
-if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
+if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
 
 // 🎨 IMAGE LISTE D'ATTENTE
 function createPendingImage(list) {
@@ -27,8 +27,8 @@ function createPendingImage(list) {
 
   let y = 180;
   list.slice(0, 6).forEach((g, i) => {
-    ctx.fillText(`${i + 1}. ${g.name}`, 60, y);
-    ctx.fillText(`ID: ${g.id}`, 60, y + 20);
+    ctx.fillText(`${i + 1}. ${g.threadName || g.name || "Groupe sans nom"}`, 60, y);
+    ctx.fillText(`ID: ${g.threadID || g.id}`, 60, y + 20);
     y += 60;
   });
 
@@ -63,106 +63,112 @@ function createWelcomeImage(groupName) {
   return file;
 }
 
-// 📦 CONFIG
-module.exports.config = {
-  name: "pending",
-  version: "1.0",
-  role: 2,
-  author: "Shade",
-  category: "owner"
-};
+// 📦 EXPORTATION STANDARD GOATBOT
+module.exports = {
+  config: {
+    name: "pending",
+    version: "1.1.0",
+    author: "Shade",
+    countDown: 5,
+    role: 2, // Réservé au Owner/Admins du bot
+    shortDescription: { en: "Gère les groupes en attente d'approbation" },
+    category: "owner",
+    guide: { en: "pending" }
+  },
 
-// 📋 AFFICHER LISTE
-module.exports.run = async function ({ api, event }) {
-  const { threadID, messageID, senderID } = event;
+  // 📋 LANCEMENT DE LA COMMANDE
+  onStart: async function ({ api, event }) {
+    const { threadID, messageID, senderID } = event;
 
-  const groups = global.pendingThreads || [];
+    // Récupération des groupes en attente via l'instance globale du bot
+    const groups = global.client?.pendingThreads || global.pendingThreads || [];
 
-  if (!groups.length) {
-    return api.sendMessage("📋 Aucun groupe en attente.", threadID, messageID);
-  }
-
-  const img = createPendingImage(groups);
-
-  const msg = `📋 » PENDING SYSTEM «
-━━━━━━━━━━━━
-g1 g2 → approve
-c1 c2 → cancel
-━━━━━━━━━━━━`;
-
-  api.sendMessage(
-    { body: msg, attachment: fs.createReadStream(img) },
-    threadID,
-    (err, info) => {
-      if (err) return;
-      global.pendingReply = {
-        messageID: info.messageID,
-        author: senderID,
-        groups
-      };
-    },
-    messageID
-  );
-};
-
-// 🔄 GESTION DES RÉPONSES (APPROBATION / REFUS)
-module.exports.handleReply = async function ({ api, event }) {
-  const { body, threadID, senderID } = event;
-
-  if (!global.pendingReply) return;
-
-  // 🔒 Sécurité: seul celui qui a lancé la commande peut répondre
-  if (senderID !== global.pendingReply.author) return;
-
-  const match = body.match(/([gc])(\d+)/i);
-  if (!match) return;
-
-  const action = match[1].toLowerCase();
-  const index = parseInt(match[2]) - 1;
-
-  const group = global.pendingReply.groups[index];
-  if (!group) {
-    return api.sendMessage("❌ Groupe introuvable.", threadID);
-  }
-
-  // ❌ Retirer de la liste d'attente globale
-  global.pendingThreads = (global.pendingThreads || []).filter(
-    g => g.id !== group.id
-  );
-
-  // ✔ APPROUVER LE GROUPE
-  if (action === "g") {
-    try {
-      const img = createWelcomeImage(group.name);
-
-      await api.sendMessage(
-        {
-          body: `👋 𝐁𝐈𝐄𝐍𝐕𝐄𝐍𝐔𝐄 𝐃𝐀𝐍𝐒 𝐋𝐄 𝐆𝐑𝐎𝐔𝐏𝐄 !\n\n🤖 Bot activé avec succès\n📌 Prefix actif\n⚙️ Système pending validé`,
-          attachment: fs.createReadStream(img)
-        },
-        group.id
-      );
-    } catch (e) {
-      console.error("Erreur lors de l'envoi du message de bienvenue:", e);
+    if (!groups.length) {
+      return api.sendMessage("📋 Aucun groupe en attente d'approbation.", threadID, messageID);
     }
 
-    return api.sendMessage(
-      `✅ APPROVED\n📌 ${group.name}\n🆔 ${group.id}`,
-      threadID
-    );
-  }
+    const img = createPendingImage(groups);
 
-  // ❌ REFUSER / QUITTER LE GROUPE
-  if (action === "c") {
-    try {
-      await api.removeUserFromGroup(api.getCurrentUserID(), group.id);
-    } catch (e) {
-      console.error("Impossible de quitter le groupe:", e);
+    const msg = `📋 » PENDING SYSTEM «\n━━━━━━━━━━━━\n👉 Répondez à ce message avec :\n• g[numéro] → Pour approuver (ex: g1)\n• c[numéro] → Pour refuser (ex: c1)\n━━━━━━━━━━━━`;
+
+    return api.sendMessage(
+      { body: msg, attachment: fs.createReadStream(img) },
+      threadID,
+      (err, info) => {
+        if (err) return;
+        
+        // Enregistrement de la session de réponse (Format natif GoatBot)
+        global.GoatBot?.onReply?.set(info.messageID, {
+          commandName: "pending",
+          author: senderID,
+          groups: groups
+        });
+        
+        try { fs.unlinkSync(img); } catch(e) {}
+      },
+      messageID
+    );
+  },
+
+  // 🔄 GESTION DES RÉPONSES (onReply remplace handleReply)
+  onReply: async function ({ api, event, Reply }) {
+    const { body, threadID, senderID, messageID } = event;
+
+    // Sécurité : seul l'auteur de la commande originale peut valider
+    if (senderID !== Reply.author) return;
+
+    const match = body.match(/([gc])(\d+)/i);
+    if (!match) return;
+
+    const action = match[1].toLowerCase();
+    const index = parseInt(match[2]) - 1;
+
+    const group = Reply.groups[index];
+    if (!group) {
+      return api.sendMessage("❌ Numéro de groupe introuvable dans la liste.", threadID, messageID);
     }
 
-    return api.sendMessage(
-      `❌ 𝐑𝐄𝐅𝐔𝐒𝐄𝐃\n📌 ${group.name}\n🆔 ${group.id}`,
-      threadID
-    );
+    const targetID = group.threadID || group.id;
+    const targetName = group.threadName || group.name || "Sans nom";
+
+    // Nettoyage des listes d'attente globales
+    if (global.client?.pendingThreads) {
+      global.client.pendingThreads = global.client.pendingThreads.filter(g => (g.threadID || g.id) !== targetID);
+    }
+    if (global.pendingThreads) {
+      global.pendingThreads = global.pendingThreads.filter(g => (g.threadID || g.id) !== targetID);
+    }
+
+    // ✔ CAS 1 : APPROUVER LE GROUPE (Action: g)
+    if (action === "g") {
+      try {
+        const imgWelcome = createWelcomeImage(targetName);
+
+        await api.sendMessage(
+          {
+            body: `👋 𝐁𝐈𝐄𝐍𝐕𝐄𝐍𝐔𝐄 𝐃𝐀𝐍𝐒 𝐋𝐄 𝐆𝐑𝐎𝐔𝐏𝐄 !\n\n🤖 Bot activé avec succès par l'administrateur.\n📌 Utilisez le préfixe actif pour voir mes commandes.`,
+            attachment: fs.createReadStream(imgWelcome)
+          },
+          targetID
+        );
+        
+        try { fs.unlinkSync(imgWelcome); } catch(e) {}
+      } catch (e) {
+        console.error("Erreur envoi bienvenue:", e);
+      }
+
+      return api.sendMessage(`✅ **GROUPE APPROUVÉ**\n📌 Nom: ${targetName}\n🆔 ID: ${targetID}`, threadID, messageID);
+    }
+
+    // ❌ CAS 2 : REFUSER ET QUITTE LE GROUPE (Action: c)
+    if (action === "c") {
+      try {
+        await api.removeUserFromGroup(api.getCurrentUserID(), targetID);
+      } catch (e) {
+        console.error("Erreur pour quitter le groupe:", e);
+      }
+
+      return api.sendMessage(`❌ **GROUPE REFUSÉ**\n📌 Nom: ${targetName}\n🆔 ID: ${targetID}`, threadID, messageID);
+    }
   }
 };
