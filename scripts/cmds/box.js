@@ -9,7 +9,7 @@ module.exports = {
     role: 0,
     author: "Shade & AI",
     description: "Gestion du groupe interactive par réponses successives (Reply)",
-    category: "owner",
+    category: "utility",
     guide: {
       fr: "{p}{n} (Envoyez la commande seule, puis répondez aux messages du bot)"
     },
