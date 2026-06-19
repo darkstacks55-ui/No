@@ -14,7 +14,7 @@ module.exports = {
     description: {
       en: "Enhance images using the Remini API to make them high-quality or 4K."
     },
-    category: "media",
+    category: "image",
     guide: {
       en: "Use the command: !remini <image_url> or reply to an image."
     }
