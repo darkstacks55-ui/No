@@ -38,7 +38,7 @@ module.exports = {
     author: "Shade",
     countDown: 2,
     role: 0,
-    category: "info",
+    category: "settings",
     guide: "help [commande]"
   },
 
