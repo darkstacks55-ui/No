@@ -14,7 +14,7 @@ module.exports = {
     version: "2.0",
     author: "Shade",
     role: 0,
-    category: "music",
+    category: "media",
     shortDescription: "Mes musiques Shadey 🎧"
   },
 
