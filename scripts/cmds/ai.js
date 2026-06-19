@@ -575,11 +575,11 @@ module.exports = {
 
   config: {
     name: 'ai',
-    aliases: ['girlai'],
+    aliases: ['snimori'],
     version: '5.0',
     author: 'Shade',
     role: 0,
-    category: '🤖 ai',
+    category: 'ai',
 
     shortDescription: {
       en: 'AI Girl 🌸'
