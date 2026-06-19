@@ -5,7 +5,7 @@ module.exports = {
     author: "Shade ✨ Fix",
     role: 2,
     description: "💌 Envoi message privé stable",
-    category: "utility",
+    category: "system",
     guide: {
       en: "{pn} <uid> <message>"
     }
