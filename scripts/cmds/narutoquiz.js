@@ -23,7 +23,7 @@ module.exports = {
     author: "Christus",
     countDown: 10,
     role: 0,
-    category: "jeu",
+    category: "game",
     guide: { en: "{pn} — Quiz de devinette de personnage Naruto" }
   },
 
