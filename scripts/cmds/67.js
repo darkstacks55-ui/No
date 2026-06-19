@@ -7,7 +7,7 @@ module.exports = {
     version: "1.4 angel ultimate",
     author: "Angel Edit ✨",
     role: 0,
-    category: "fun",
+    category: "other",
     description: "💖 TikTok 67 trend auto reply"
   },
 
