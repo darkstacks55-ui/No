@@ -13,7 +13,7 @@ module.exports = {
 			en: "🌸 Translate text with Angel kawaii magic",
 			vi: "🌸 Dịch văn bản phong cách dễ thương"
 		},
-		category: "🌸 angel-utility",
+		category: "utility",
 		guide: {
 			en:
 				"🌸 {pn} <text> → translate\n" +
