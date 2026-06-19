@@ -9,7 +9,7 @@ module.exports = {
     role: 0,
     countDown: 5,
     description: "Envoie une vidéo aléatoire de Naruto.",
-    category: "anime",
+    category: "media",
   },
 
   onStart: async function ({ api, event }) {
