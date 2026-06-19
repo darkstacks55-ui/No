@@ -5,7 +5,7 @@ module.exports = {
     name: "vedit",
     version: "0.0.1",
     author: "Christus",
-    category: "fun",
+    category: "ai",
     role: 0,
     shortDescription: "Transformer une photo en courte vidéo d'animation AI."
   },
