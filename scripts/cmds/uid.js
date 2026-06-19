@@ -12,7 +12,7 @@ module.exports = {
 			en: "🌸 View Facebook UID with Angel kawaii style",
 			vi: "🌸 Xem UID Facebook với phong cách dễ thương"
 		},
-		category: "🌸 angel-info",
+		category: "utility",
 		guide: {
 			en:
 				"🌸 {pn} → your UID\n" +
