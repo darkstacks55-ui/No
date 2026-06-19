@@ -9,7 +9,7 @@ module.exports = {
     role: 0,
     shortDescription: "🌸 Upload image/vidéo sur Imgur",
     longDescription: "💖 Réponds à une image ou envoie une URL pour l’envoyer sur Imgur",
-    category: "utility ",
+    category: "download",
     guide: "{pn} reply image/vidéo ou lien 🌸"
   },
 
