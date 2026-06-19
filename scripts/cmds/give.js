@@ -9,7 +9,7 @@ module.exports = {
     role: 0, 
     author: "Shade & AI",  
     description: "Donne de l'argent via tag ou réponse (reply) avec génération d'image",  
-    category: "économie",  
+    category: "economy",  
     guide: {
       fr: "{p}{n} [@tag] [montant] ou en répondant à un message : {p}{n} [montant]"
     },  
