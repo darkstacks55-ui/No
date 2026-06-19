@@ -11,7 +11,7 @@ module.exports = {
     author: "Saimx69x × Angel Edit ✨",
     countDown: 5,
     role: 0,
-    category: "🤡 fun",
+    category: "utility",
     shortDescription: "💖 mix emojis in kawaii style",
     longDescription: "🌸 Combine two emojis into a magical Angel kawaii result",
     guide: {
