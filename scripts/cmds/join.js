@@ -8,7 +8,7 @@ module.exports = {
     countDown: 5,
     role: 2,
     shortDescription: { en: "💖 Join group angel system" },
-    category: "owner",
+    category: "utility",
     guide: { en: "join [page|next|prev]" },
   },
 
