@@ -12,7 +12,7 @@ module.exports = {
     description: {
       fr: "Génère une image IA en utilisant l'API Oculux Luminarium",
     },
-    category: "générateur d'images",
+    category: "ai",
     guide: {
       fr: "{pn} <prompt>\nExemple : /lumin ville néon futuriste de nuit",
     },
