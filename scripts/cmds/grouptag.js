@@ -10,7 +10,7 @@ module.exports = {
 			vi: "Tag thành viên theo nhóm",
 			en: "Tag members by group"
 		},
-		category: "group"
+		category: "utility"
 	},
 
 	langs: {
