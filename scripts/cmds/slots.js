@@ -10,7 +10,7 @@ module.exports = {
 		countDown: 8,
 		role: 0,
 		description: "🎰 Angel Slot Machine (BANK LINKED)",
-		category: "game"
+		category: "economy"
 	},
 
 	onStart: async function ({ message, event, args, usersData }) {
