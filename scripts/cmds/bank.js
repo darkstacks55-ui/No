@@ -8,7 +8,7 @@ module.exports = {
         countDown: 5,
         role: 0, // 0 = Tous les utilisateurs, 1 = Admin du groupe, 2 = Admin du bot
         description: "SystÃ¨me bancaire et Ã©conomique ultra-complet (Banque, Bourse, Immobilier, Crimes, Business)",
-        category: "Ã‰conomie",
+        category: "economy",
         guide: {
             en: "{p}{n} [register/balance/deposit/withdraw/transfer/daily/work/loan/repay/rob/invest/business/property/shop/achievements/history/vault]",
             fr: "{p}{n} [register/balance/deposit/withdraw/transfer/daily/work/loan/repay/rob/invest/business/property/shop/achievements/history/vault]"
