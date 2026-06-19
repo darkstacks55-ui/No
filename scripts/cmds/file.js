@@ -9,7 +9,7 @@ module.exports = {
     hasPermssion: 2, // Réservé aux admins
     credits: "Gemini AI",
     description: "Affiche la liste, le contenu ou supprime un fichier de commande",
-    commandCategory: "system",
+    commandCategory: "utility",
     usages: "/file | /file view [nom.js] | /file delete [nom.js]",
     cooldowns: 2
   },
