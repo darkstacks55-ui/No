@@ -13,7 +13,7 @@ function getDomain(url) {
 
 module.exports = {
 	config: {
-		name: "settings",
+		name: "event",
 		version: "1.9 angel kawaii",
 		author: "NTKhang | Angel Edit ✨",
 		countDown: 5,
@@ -22,7 +22,7 @@ module.exports = {
 			vi: "Quản lý các tệp lệnh event của bạn",
 			en: "Manage your event command files"
 		},
-		category: "owner",
+		category: "settings",
 		guide: {
 			en:
 				"{pn} load <file>\n" +
