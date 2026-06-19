@@ -30,7 +30,7 @@ module.exports.config = {
   hasPermssion: 0,
   credits: "Shade (upgrade full system)",
   description: "Pet system + economy link",
-  commandCategory: "fun",
+  commandCategory: "economy",
   usages: "[adopt|feed|daily|stats]",
   cooldowns: 3
 };
