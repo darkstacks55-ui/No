@@ -14,7 +14,7 @@ module.exports = {
       fr: "Activer/désactiver le mode où seuls les utilisateurs VIP peuvent utiliser le bot",
       en: "Turn on/off only VIP users can use bot"
     },
-    category: "owner",
+    category: "system",
     guide: {
       fr: "   {pn} [on | off] : Activer/désactiver le mode VIP seulement"
         + "\n   {pn} noti [on | off] : Activer/désactiver la notification lorsqu’un utilisateur non VIP utilise le bot",
