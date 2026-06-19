@@ -18,7 +18,7 @@ module.exports = {
     countDown: 5,
     role: 0,
     description: "💖🌸 Find kawaii meaning of emojis",
-    category: "wiki",
+    category: "utility",
     guide: "{pn} <emoji>"
   },
 
