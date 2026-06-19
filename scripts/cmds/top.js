@@ -8,7 +8,7 @@ module.exports.config = {
   hasPermssion: 0,  
   author: "Shade",  
   description: "Top 10 des plus riches avec avatars",  
-  commandCategory: "économie",  
+  commandCategory: "economy",  
   usages: "[page]",  
   cooldowns: 5  
 };  
