@@ -22,7 +22,7 @@ module.exports = {
     version: "5.1",
     author: "Shade",
     role: 2,
-    category: "owner"
+    category: "system"
   },
 
   onStart: async function ({ message, args, event, usersData }) {
