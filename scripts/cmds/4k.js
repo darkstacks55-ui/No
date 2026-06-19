@@ -9,7 +9,7 @@ module.exports = {
     author: "Shade ✨ Angel Edit",
     countDown: 5,
     longDescription: "💖 Upscale image en 4K magique ✨",
-    category: "🌸 image",
+    category: "image",
     guide: {
       en: "{pn} reply to an image 💖✨"
     }
