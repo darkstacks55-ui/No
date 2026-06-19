@@ -6,7 +6,7 @@ module.exports = new Command({
   version: "1.1.0",
   description: "Envoie une citation aléatoire",
   usage: "quote",
-  category: "fun",
+  category: "game",
   role: 0,
   cooldown: 3,
 
