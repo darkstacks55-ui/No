@@ -12,7 +12,7 @@ module.exports = {
     role: 0,
     shortDescription: "🌸 infos du groupe kawaii",
     longDescription: "Affiche les informations du groupe avec un style kawaii ✨",
-    category: "group",
+    category: "utility",
   },
 
   onStart: async function ({ api, event }) {
