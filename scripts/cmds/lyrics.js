@@ -5,7 +5,7 @@ module.exports = {
     version: "1.0",
     author: "Aryan Chauhan",
     role: 0,
-    category: "general",
+    category: "media",
     longDescription: { en: "Get song lyrics with album art" },
     guide: { en: "{pn} [song name]" }
   },
