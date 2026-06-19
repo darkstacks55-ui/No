@@ -1,25 +1,44 @@
+const { createCanvas, loadImage } = require("canvas");
+const fs = require("fs");
+const path = require("path");
+const axios = require("axios");
+
 async function generateDashboard(data, message, usersData) {
-  const WIDTH = 1080, HEIGHT = 1500;
+  const WIDTH = 1080;
+  const HEIGHT = 1500;
+
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext("2d");
 
-  // 🌸 ANGEL BACKGROUND
-  if (wallpaper && fs.existsSync(wallpaper)) {
+  // Vérifications de sécurité
+  data = data || {};
+  data.trend30 = Array.isArray(data.trend30) ? data.trend30 : Array(30).fill(0);
+  data.hours24 = Array.isArray(data.hours24) ? data.hours24 : Array(24).fill(0);
+  data.breakdown = data.breakdown || {
+    text: 0,
+    reactions: 0,
+    media: 0,
+    gifs: 0
+  };
+
+  // Background
+  if (typeof wallpaper !== "undefined" && wallpaper && fs.existsSync(wallpaper)) {
     const bgImg = await loadImage(wallpaper);
     ctx.drawImage(bgImg, 0, 0, WIDTH, HEIGHT);
 
-    ctx.fillStyle = "rgba(255, 182, 255, 0.15)";
+    ctx.fillStyle = "rgba(255,182,255,0.15)";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
   } else {
     const bg = ctx.createLinearGradient(0, 0, 0, HEIGHT);
     bg.addColorStop(0, "#1a0033");
     bg.addColorStop(0.5, "#ffb6ff");
     bg.addColorStop(1, "#ffe6f7");
+
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
   }
 
-  // 👼 TITLE
+  // Title
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 70px Arial";
   ctx.textAlign = "center";
@@ -27,36 +46,62 @@ async function generateDashboard(data, message, usersData) {
 
   ctx.font = "bold 40px Arial";
   ctx.fillStyle = "#ffccff";
-  ctx.fillText(`𓋜 ${data.name} 𓋜`, WIDTH / 2, 150);
+  ctx.fillText(`𓋜 ${data.name || "Unknown"} 𓋜`, WIDTH / 2, 150);
 
-  // 👤 AVATAR
+  // Avatar
   let img;
+
   try {
     const avatarUrl = await usersData.getAvatarUrl(data.uid);
-    const buffer = await axios.get(avatarUrl, { responseType: "arraybuffer" });
-    img = await loadImage(Buffer.from(buffer.data));
-  } catch {
-    img = await loadImage(path.join(__dirname, "default_avatar.png"));
+
+    const response = await axios.get(avatarUrl, {
+      responseType: "arraybuffer"
+    });
+
+    img = await loadImage(Buffer.from(response.data));
+  } catch (err) {
+    try {
+      img = await loadImage(path.join(__dirname, "default_avatar.png"));
+    } catch {
+      img = null;
+    }
   }
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(WIDTH / 2, 260, 90, 0, Math.PI * 2);
-  ctx.closePath();
-  ctx.clip();
-  ctx.drawImage(img, WIDTH / 2 - 90, 170, 180, 180);
-  ctx.restore();
+  if (img) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(WIDTH / 2, 260, 90, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(img, WIDTH / 2 - 90, 170, 180, 180);
+    ctx.restore();
+  }
 
-  // 💖 CARDS ANGEL STYLE
+  // Cards
   const cards = [
-    { label: "Total Messages", value: formatNumber(data.totalMessages) },
-    { label: "Average Daily", value: Math.floor(data.totalMessages / 30) },
-    { label: "Peak Activity", value: data.peak },
-    { label: "Role", value: "Angel Member ✨" }
+    {
+      label: "Total Messages",
+      value: typeof formatNumber === "function"
+        ? formatNumber(data.totalMessages || 0)
+        : String(data.totalMessages || 0)
+    },
+    {
+      label: "Average Daily",
+      value: Math.floor((data.totalMessages || 0) / 30)
+    },
+    {
+      label: "Peak Activity",
+      value: data.peak || "N/A"
+    },
+    {
+      label: "Role",
+      value: "Angel Member ✨"
+    }
   ];
 
   let x = 80;
-  for (let c of cards) {
+
+  for (const c of cards) {
     ctx.fillStyle = "rgba(255,255,255,0.1)";
     ctx.fillRect(x, 360, 220, 120);
 
@@ -66,7 +111,7 @@ async function generateDashboard(data, message, usersData) {
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "22px Arial";
-    ctx.fillText("✦ " + c.label, x + 110, 405);
+    ctx.fillText(`✦ ${c.label}`, x + 110, 405);
 
     ctx.font = "bold 32px Arial";
     ctx.fillStyle = "#ffccff";
@@ -75,19 +120,23 @@ async function generateDashboard(data, message, usersData) {
     x += 260;
   }
 
-  // 📊 30 DAY TREND
+  // Trend
   ctx.font = "bold 32px Arial";
   ctx.fillStyle = "#fff";
-  ctx.textAlign = "center";
   ctx.fillText("✧ 30-DAY ANGEL ACTIVITY ✧", WIDTH / 2, 540);
 
-  const gX = 120, gY = 580, gW = WIDTH - 240, gH = 250;
-  const maxVal = Math.max(...data.trend30);
+  const gX = 120;
+  const gY = 580;
+  const gW = WIDTH - 240;
+  const gH = 250;
+
+  const maxVal = Math.max(...data.trend30, 1);
   const barW = gW / 30 - 4;
 
   for (let i = 0; i < 30; i++) {
-    let h = (data.trend30[i] / maxVal) * gH;
-    let y = gY + (gH - h);
+    const value = data.trend30[i] || 0;
+    const h = (value / maxVal) * gH;
+    const y = gY + (gH - h);
 
     ctx.fillStyle = "#ff99ff";
     ctx.shadowColor = "#ffffff";
@@ -100,31 +149,38 @@ async function generateDashboard(data, message, usersData) {
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
 
-  // 🌙 24H HEATMAP
+  // Heatmap
   ctx.font = "bold 32px Arial";
   ctx.fillStyle = "#fff";
   ctx.fillText("✧ 24H ANGEL FLOW ✧", WIDTH / 2, 900);
 
-  const hX = 100, hY = 940, maxH = Math.max(...data.hours24);
+  const hX = 100;
+  const hY = 940;
+  const maxH = Math.max(...data.hours24, 1);
 
   for (let i = 0; i < 24; i++) {
-    const intensity = data.hours24[i] / maxH;
-    ctx.fillStyle = `rgba(255, 182, 255, ${0.3 + intensity * 0.7})`;
+    const intensity = (data.hours24[i] || 0) / maxH;
+
+    ctx.fillStyle = `rgba(255,182,255,${0.3 + intensity * 0.7})`;
     ctx.fillRect(hX + i * 36, hY, 32, 32);
   }
 
-  // 💎 PIE CHART ANGEL
+  // Pie Chart
   ctx.font = "bold 32px Arial";
   ctx.fillStyle = "#fff";
   ctx.fillText("✧ MESSAGE ENERGY ✧", WIDTH / 2, 1100);
 
-  const total = Object.values(data.breakdown).reduce((a, b) => a + b, 0);
+  const values = Object.values(data.breakdown);
+  const total = values.reduce((a, b) => a + b, 0) || 1;
+
   const colors = ["#ffb6ff", "#ffd1ff", "#caa6ff", "#ffffff"];
   const labels = ["Text", "Reactions", "Media", "GIFs"];
-  const values = Object.values(data.breakdown);
 
   let angle = -Math.PI / 2;
-  let cx = 300, cy = 1250, r = 120;
+
+  const cx = 300;
+  const cy = 1250;
+  const r = 120;
 
   for (let i = 0; i < values.length; i++) {
     const slice = (values[i] / total) * Math.PI * 2;
@@ -135,17 +191,15 @@ async function generateDashboard(data, message, usersData) {
     ctx.closePath();
 
     ctx.fillStyle = colors[i];
-    ctx.shadowColor = "#fff";
-    ctx.shadowBlur = 15;
     ctx.fill();
 
     angle += slice;
   }
 
-  ctx.shadowBlur = 0;
+  // Legend
+  let lx = 500;
+  let ly = 1180;
 
-  // 📌 LEGEND
-  let lx = 500, ly = 1180;
   ctx.font = "22px Arial";
   ctx.textAlign = "left";
 
@@ -153,27 +207,54 @@ async function generateDashboard(data, message, usersData) {
     ctx.fillStyle = colors[i];
     ctx.fillRect(lx, ly + i * 40, 28, 28);
 
-    ctx.fillStyle = "white";
-    ctx.fillText(`${labels[i]}: ${values[i]}`, lx + 40, ly + 22 + i * 40);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(
+      `${labels[i]}: ${values[i] || 0}`,
+      lx + 40,
+      ly + 22 + i * 40
+    );
   }
 
-  // ✨ FINAL GLOW
-  ctx.fillStyle = "rgba(255,255,255,0.05)";
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  // 💾 SAVE
   const tmp = path.join(__dirname, "tmp");
-  if (!fs.existsSync(tmp)) fs.mkdirSync(tmp);
 
-  const file = path.join(tmp, `angel_dashboard_${data.uid}.png`);
-  const out = fs.createWriteStream(file);
+  if (!fs.existsSync(tmp)) {
+    fs.mkdirSync(tmp, { recursive: true });
+  }
 
-  canvas.createPNGStream().pipe(out);
+  const file = path.join(
+    tmp,
+    `angel_dashboard_${data.uid || Date.now()}.png`
+  );
 
-  out.on("finish", () => {
-    message.reply({
-      body: "👼 ✧ ANGEL DASHBOARD GENERATED ✧",
-      attachment: fs.createReadStream(file)
-    }, () => fs.unlinkSync(file));
+  // Gestion sécurisée et asynchrone de la création et de l'envoi du fichier image
+  return new Promise((resolve, reject) => {
+    const out = fs.createWriteStream(file);
+    const stream = canvas.createPNGStream();
+    stream.pipe(out);
+
+    out.on("finish", () => {
+      message.reply(
+        {
+          body: "👼 ✧ ANGEL DASHBOARD GENERATED ✧",
+          attachment: fs.createReadStream(file)
+        },
+        () => {
+          try {
+            if (fs.existsSync(file)) {
+              fs.unlinkSync(file);
+            }
+          } catch (e) {
+            console.error("Erreur lors de la suppression du cache image:", e);
+          }
+          resolve();
+        }
+      );
+    });
+
+    out.on("error", (err) => {
+      reject(err);
+    });
   });
 }
+
+module.exports = generateDashboard;
