@@ -28,7 +28,7 @@ module.exports = {
  role: 0,
  shortDescription: "💖 Générer des images IA kawaii",
  longDescription: "✨ Génère 4 images IA et les combine en grille magique",
- category: "🌸 générateur d'images",
+ category: "image",
  guide: "{p}fastx <prompt> [--ar <ratio>]"
  },
 
