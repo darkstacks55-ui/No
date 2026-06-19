@@ -2,16 +2,16 @@ module.exports = {
   config: {
     name: "levelup",
     version: "1.3",
-    author: "Christus",
+    author: "Shade",
     countDown: 5,
-    role: 1,
+    role: 2,
     shortDescription: {
       fr: "Définir le niveau d'un utilisateur (avec synchronisation de l'XP)"
     },
     description: {
       fr: "Augmente ou réduit le niveau d'un utilisateur et synchronise l'XP avec le système de classement"
     },
-    category: "ranking",
+    category: "economy",
     guide: {
       fr: "{pn} @tag 10/20\n{pn} 25\n{pn} 100081330372098 -5 (par UID)"
     }
