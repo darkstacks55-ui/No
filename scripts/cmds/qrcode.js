@@ -12,7 +12,7 @@ module.exports = {
     role: 0,
     shortDescription: "Make or scan QR code",
     longDescription: "Generate QR code from text or scan QR from image (reply or link)",
-    category: "tools",
+    category: "image",
     guide: {
       en: "{pn} make <text>\n{pn} scan <image_url or reply image>"
     }
