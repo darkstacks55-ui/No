@@ -13,7 +13,7 @@ module.exports = {
     description: {
       fr: "💎 Système VIP sécurisé (owner only)"
     },
-    category: "💖 angel admin"
+    category: "system"
   },
 
   onStart: async function ({ message, args, event }) {
