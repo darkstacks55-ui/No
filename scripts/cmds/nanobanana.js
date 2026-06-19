@@ -12,7 +12,7 @@ module.exports = {
     role: 0,
     shortDescription: "Générer une image avec l'API NanoBanana",
     longDescription: "Génère une image IA basée sur votre prompt en utilisant l'API NanoBanana.",
-    category: "générateur d'images",
+    category: "image",
     guide: "{p}nanobanana [prompt]"
   },
 
