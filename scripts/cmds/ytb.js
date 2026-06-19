@@ -19,7 +19,7 @@ module.exports = {
     countDown: 5,
     role: 0,
     description: { fr: "Rechercher et télécharger une vidéo/audio YouTube" },
-    category: "média",
+    category: "media",
     guide: { fr: "{pn} -v <recherche|url>\n{pn} -a <recherche|url>" }
   },
 
