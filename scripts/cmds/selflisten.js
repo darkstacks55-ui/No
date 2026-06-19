@@ -10,7 +10,7 @@ module.exports = {
     role: 2,
     shortDescription: "Activer/Désactiver selfListen",
     longDescription: "Active ou désactive le self-listen du bot sans le redémarrer",
-    category: "admin",
+    category: "security",
     guide: "/sl on | /sl off"
   },
 
