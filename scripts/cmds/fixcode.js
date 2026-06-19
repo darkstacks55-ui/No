@@ -8,7 +8,7 @@ module.exports = {
         role: 2, // 2 = Réservé uniquement à l'Admin du bot (Développeur) pour des raisons de sécurité
         author: "AI Collaborator",
         description: "Scanne, détecte et répare automatiquement les erreurs structurelles d'un fichier de commande",
-        category: "Développeur",
+        category: "owner",
         guide: {
             fr: "{p}{n} [nom_du_fichier.js]"
         },
