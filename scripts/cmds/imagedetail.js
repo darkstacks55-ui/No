@@ -11,7 +11,7 @@ module.exports.config = {
   countDown: 5,
   role: 0,
   description: "💖 Affiche les métadonnées d'une image avec style angel ✨",
-  category: "🌸 image",
+  category: "image",
   guide: "{pn} reply à une image 📸"
 };
 
