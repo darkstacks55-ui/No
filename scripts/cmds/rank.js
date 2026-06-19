@@ -141,7 +141,7 @@ module.exports = {
     countDown: 5,
     role: 0,
     shortDescription: "Angel kawaii rank card 💖",
-    category: "rank",
+    category: "info",
     guide: "{pn} [@mention or blank]"
   },
 
