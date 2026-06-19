@@ -11,7 +11,7 @@ module.exports = {
     role: 0,
     shortDescription: "Générateur de mème drôle 'erreur'",
     longDescription: "Taguez ou répondez à quelqu'un pour créer un mème 'erreur'.",
-    category: "fun",
+    category: "game",
     guide: {
       fr: "{pn} @mention ou répondre à quelqu'un",
     },
