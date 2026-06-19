@@ -31,7 +31,7 @@ module.exports.config = {
   author: "Angel Secure Edition",
   role: 0,
   countDown: 3,
-  category: "🌸 angel store",
+  category: "admin",
   guide: { en: "Usage: /cs [command | letter | page]" }
 };
 
