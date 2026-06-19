@@ -10,7 +10,7 @@ module.exports = {
     role: 0,
     countDown: 3,
     shortDescription: "Récupère une carte de temps stylée depuis l'API",
-    category: "tools",
+    category: "utility",
     guide: "/time - Obtenir la carte du temps néon actuelle"
   },
 
