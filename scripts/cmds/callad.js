@@ -12,7 +12,7 @@ module.exports = {
     description: {
       fr: "💌 Envoie un message aux admins du bot (version stable)"
     },
-    category: "💖 support angel",
+    category: "utility",
     guide: {
       fr: "callad <message>"
     }
