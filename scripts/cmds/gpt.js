@@ -16,7 +16,7 @@ module.exports = {
     countDown: 20,
     role: 0,
     longDescription: "💖 Generate or edit images using GPT Image model (Angel kawaii)",
-    category: "ai-image",
+    category: "ai",
     guide: {
       en:
         "{pn} <prompt> [--seed <true/false or number>] [--width <px>] [--height <px>]\n" +
