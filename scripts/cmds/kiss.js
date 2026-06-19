@@ -19,7 +19,7 @@ module.exports = {
     countDown: 5,
     role: 0,
     description: "💋 Bisou Angel kawaii entre deux cœurs liés 🌸✨",
-    category: "🌸 angel-love",
+    category: "game",
     guide: {
       en: "{pn} @tag ou reply — faire un bisou angel 💋"
     }
