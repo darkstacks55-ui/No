@@ -9,7 +9,7 @@ module.exports = {
   config: {
     name: "pair3",
     author: "Christus",
-    category: "love",
+    category: "game",
     version: "1.0",
     role: 0,
     shortDescription: {
