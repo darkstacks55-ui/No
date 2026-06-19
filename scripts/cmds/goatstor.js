@@ -33,7 +33,7 @@ module.exports = {
     shortDescription: {
       en: "🐐 GoatStor kawaii marketplace"
     },
-    category: "market",
+    category: "download",
     cooldowns: 0,
   },
 
