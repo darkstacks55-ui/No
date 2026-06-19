@@ -9,7 +9,7 @@ module.exports.config = {
   hasPermssion: 0,
   credits: "Shade (improved by ChatGPT)",
   description: "Hug kawaii en image (version pro)",
-  commandCategory: "fun",
+  commandCategory: "game",
   usages: "[@tag | reply]",
   cooldowns: 3
 };
