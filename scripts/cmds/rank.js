@@ -33,98 +33,126 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 async function drawRankCard(data) {
-  const W = 1200, H = 600;
+  // Dimensions modernes et horizontales adaptées
+  const W = 1100, H = 450;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext("2d");
 
-  // 🌸 Angel pastel background
-  const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, "#ffe6f7");
-  bg.addColorStop(0.5, "#e6f0ff");
-  bg.addColorStop(1, "#fffaff");
-  ctx.fillStyle = bg;
+  // 🌌 Arrière-plan Premium Sombre
+  ctx.fillStyle = "#0d0e15";
   ctx.fillRect(0, 0, W, H);
 
-  // ✨ sparkles
-  for (let i = 0; i < 120; i++) {
-    ctx.beginPath();
-    ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255,182,255,0.35)";
+  // 🔮 Grand cercle lumineux en arrière-plan (Effet Glow)
+  const glowGrad = ctx.createRadialGradient(200, 225, 50, 200, 225, 400);
+  glowGrad.addColorStop(0, "rgba(108, 92, 231, 0.25)");
+  glowGrad.addColorStop(1, "rgba(13, 14, 21, 0)");
+  ctx.fillStyle = glowGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // 🛡️ Conteneur principal transparent/futuriste
+  ctx.fillStyle = "rgba(255, 255, 255, 0.03)";
+  roundRect(ctx, 30, 30, W - 60, H - 60, 30);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // 🔘 Dessin de l'Avatar (Aligné à gauche)
+  const avX = 160, avY = 200, radius = 95;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(avX, avY, radius, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.drawImage(data.avatar, avX - radius, avY - radius, radius * 2, radius * 2);
+  ctx.restore();
+
+  // ⭕ Contour de l'avatar avec dégradé Néon Violet/Cyan
+  const borderGrad = ctx.createLinearGradient(avX - radius, avY, avX + radius, avY);
+  borderGrad.addColorStop(0, "#a29bfe");
+  borderGrad.addColorStop(1, "#00cec9");
+  ctx.strokeStyle = borderGrad;
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(avX, avY, radius + 3, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 🏷️ Pseudo & Nom d'utilisateur
+  ctx.textAlign = "left";
+  ctx.font = "bold 44px Arial";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(data.name, 310, 110);
+
+  ctx.font = "22px Arial";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+  ctx.fillText(`@${data.username}`, 310, 145);
+
+  // 📊 Affichage des Ranks & Badges (Style Rectangles de Statistiques)
+  const drawStatBox = (x, y, w, h, label, value, color) => {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.02)";
+    roundRect(ctx, x, y, w, h, 15);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.stroke();
+
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.fillText(label, x + 20, y + 32);
+
+    ctx.font = "bold 24px Arial";
+    ctx.fillStyle = color;
+    ctx.fillText(value, x + 20, y + 68);
+  };
+
+  // Première ligne de stats
+  drawStatBox(310, 180, 220, 85, "NIVEAU ACTUEL", `Niv. ${data.level}`, "#6c5ce7");
+  drawStatBox(550, 180, 220, 85, "CLASSEMENT EXP", `#${data.rank}`, "#00cec9");
+  drawStatBox(790, 180, 240, 85, "CLASSEMENT CA$H", `#${data.moneyRank || "N/A"}`, "#e17055");
+
+  // Deuxième ligne de stats (Détails complémentaires)
+  drawStatBox(310, 285, 220, 85, "PORTEFEUILLE", `${data.money.toLocaleString()}$`, "#00b894");
+  drawStatBox(550, 285, 220, 85, "GENRE / PROFIL", data.gender.split(" ")[0], "#fd79a8");
+  drawStatBox(790, 285, 240, 85, "UID DU COMPTE", data.uid, "#ffeaa7");
+
+  // 📈 Barre de progression globale en bas
+  const barX = 70, barY = 405, barW = W - 140, barH = 14;
+  
+  // Fond de la barre
+  ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+  roundRect(ctx, barX, barY, barW, barH, 7);
+  ctx.fill();
+
+  // Remplissage de la barre
+  const progressPercent = Math.min(data.exp / data.requiredExp, 1);
+  if (progressPercent > 0) {
+    const progressGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+    progressGrad.addColorStop(0, "#6c5ce7");
+    progressGrad.addColorStop(1, "#00cec9");
+    ctx.fillStyle = progressGrad;
+    roundRect(ctx, barX, barY, barW * progressPercent, barH, 7);
     ctx.fill();
   }
 
-  // 💗 frame glow
-  ctx.save();
-  ctx.shadowColor = "#ffb6ff";
-  ctx.shadowBlur = 40;
-  ctx.strokeStyle = "rgba(255,182,255,0.5)";
-  ctx.lineWidth = 10;
-  roundRect(ctx, 20, 20, W - 40, H - 40, 50);
-  ctx.stroke();
-  ctx.restore();
+  // Texte au-dessus de la barre de progression
+  ctx.font = "bold 16px Arial";
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "left";
+  ctx.fillText(`EXP: ${data.exp.toLocaleString()} / ${data.requiredExp.toLocaleString()}`, barX, barY - 12);
+  
+  ctx.textAlign = "right";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+  ctx.fillText(`${Math.round(progressPercent * 100)}%`, barX + barW, barY - 12);
 
-  const centerX = 600, centerY = 170, radius = 100;
-
-  // 👼 halo
-  ctx.beginPath();
-  ctx.arc(centerX, centerY - 120, 60, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(255,255,255,0.9)";
-  ctx.lineWidth = 8;
-  ctx.shadowColor = "#ffd6ff";
-  ctx.shadowBlur = 20;
-  ctx.stroke();
-
-  // 💖 avatar
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-  ctx.clip();
-  ctx.drawImage(data.avatar, centerX - radius, centerY - radius, radius * 2, radius * 2);
-  ctx.restore();
-
-  // 💞 name
-  ctx.font = "bold 48px Arial";
-  ctx.fillStyle = "#ff66cc";
-  ctx.textAlign = "center";
-  ctx.shadowColor = "#ffffff";
-  ctx.shadowBlur = 20;
-  ctx.fillText(`💖 ${data.name} 💖`, W / 2, 330);
-
-  // 🌸 left stats
-  const leftX = 140, topY = 380, gap = 42;
-  ctx.font = "28px Arial";
-  ctx.fillStyle = "#ff66cc";
-
-  [
-    `🆔 UID: ${data.uid}`,
-    `💗 Level: ${data.level}`,
-    `✨ EXP: ${data.exp} / ${data.requiredExp}`,
-    `💰 Money: ${data.money}`,
-    `🏆 Rank: #${data.rank}`
-  ].forEach((t, i) => ctx.fillText(t, leftX, topY + i * gap));
-
-  // 💎 right stats
-  const rightX = 700;
-  ctx.fillStyle = "#66ccff";
-
-  [
-    `💎 Money Rank: #${data.moneyRank || "N/A"}`,
-    `👑 Nickname: ${data.nickname || data.name}`,
-    `🌸 Gender: ${data.gender}`,
-    `💫 Username: ${data.username}`
-  ].forEach((t, i) => ctx.fillText(t, rightX, topY + i * gap));
-
-  // 💌 footer
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "#999";
+  // 📅 Horodatage du système en filigrane discret
+  ctx.font = "14px Arial";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
   ctx.textAlign = "center";
   ctx.fillText(
-    `💌 Angel Rank • ${moment().tz("Africa/Abidjan").format("YYYY-MM-DD HH:mm")}`,
+    `Généré le ${moment().tz("Africa/Abidjan").format("DD/MM/YYYY à HH:mm")}`,
     W / 2,
-    H - 25
+    23
   );
 
-  const fileName = `angel_rank_${data.uid}_${randomString(5)}.png`;
+  const fileName = `premium_rank_${data.uid}_${randomString(5)}.png`;
   const filePath = path.join(__dirname, "cache", fileName);
 
   if (!fs.existsSync(path.dirname(filePath))) fs.mkdirSync(path.dirname(filePath));
@@ -136,13 +164,13 @@ async function drawRankCard(data) {
 module.exports = {
   config: {
     name: "rank",
-    version: "ANGEL-1.0",
-    author: "Angel Shade ✨",
+    version: "PREMIUM-2.0",
+    author: "Shade × ChatGPT",
     countDown: 5,
     role: 0,
-    shortDescription: "Angel kawaii rank card 💖",
-    category: "info",
-    guide: "{pn} [@mention or blank]"
+    shortDescription: "Affiche votre carte de niveau premium",
+    category: "utility",
+    guide: "{pn} [@mention ou vide]"
   },
 
   onStart: async function ({ api, event, args, usersData, message }) {
@@ -153,7 +181,7 @@ module.exports = {
       const allUsers = await usersData.getAll();
 
       const sortedExp = allUsers
-        .map(u => ({ id: u.userID, exp: u.exp || 0, money: u.money || 0 }))
+        .map(u => ({ id: u.userID, exp: u.exp || 0 }))
         .sort((a, b) => b.exp - a.exp);
 
       const rank = sortedExp.findIndex(u => u.id === uid) + 1;
@@ -162,11 +190,11 @@ module.exports = {
       const moneyRank = sortedMoney.findIndex(u => u.userID === uid) + 1;
 
       const userData = await usersData.get(uid);
-      if (!userData) return message.reply("❌ User not found.");
+      if (!userData) return message.reply("❌ Utilisateur introuvable.");
 
       const uInfo = await api.getUserInfo(uid);
       const info = uInfo[uid];
-      if (!info) return message.reply("❌ Failed to fetch info.");
+      if (!info) return message.reply("❌ Impossible de charger les informations Facebook.");
 
       const exp = userData.exp || 0;
       const level = expToLevel(exp);
@@ -182,10 +210,10 @@ module.exports = {
 
       const filePath = await drawRankCard({
         avatar,
-        name: info.name || "User",
+        name: info.name || "Utilisateur",
         uid,
-        username: info.vanity || "Not Set",
-        gender: ["Unknown", "Girl 🙋🏻‍♀️", "Boy 🙋🏻‍♂️"][info.gender] || "Unknown",
+        username: info.vanity || "Non défini",
+        gender: ["Inconnu", "Fille 🙋🏻‍♀️", "Garçon 🙋🏻‍♂️"][info.gender] || "Inconnu",
         nickname: userData.nickname || info.name,
         level,
         exp: exp - currentExp,
@@ -207,7 +235,7 @@ module.exports = {
 
     } catch (e) {
       console.log(e);
-      message.reply("❌ Error generating angel rank.");
+      message.reply("❌ Une erreur est survenue lors de la création de la carte.");
     }
   }
 };
