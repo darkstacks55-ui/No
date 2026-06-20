@@ -434,7 +434,15 @@ module.exports = {
                     const operationalMode = args[1]?.toLowerCase();
                     const housingMarket = [
                         { identity: "Smart Condo Unit", cost: 50000, rent: 900 },
-                        { identity: "Coastal Estate Compound", cost: 250000, rent: 5000 }
+                        { identity: "Coastal Estate Compound", cost: 250000, rent: 5000 },
+                        { identity: "Urban Apartment Complex", cost: 100000, rent: 1800 },
+                        { identity: "Luxury Beach Villa", cost: 500000, rent: 10000 },
+                        { identity: "Mountain Retreat Lodge", cost: 750000, rent: 15000 },
+                        { identity: "Downtown Office Tower", cost: 1200000, rent: 24000 },
+                        { identity: "Private Island Resort", cost: 2500000, rent: 50000 },
+                        { identity: "Royal Palace Estate", cost: 5000000, rent: 100000 },
+                        { identity: "Futuristic Sky Penthouse", cost: 10000000, rent: 220000 },
+                        { identity: "Intercontinental Mega City", cost: 25000000, rent: 600000 }
                     ];  
 
                     if (operationalMode === "list") {
