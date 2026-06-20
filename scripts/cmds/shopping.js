@@ -1,0 +1,178 @@
+const SHOP_ITEMS = {
+  voitures: [
+    { id: "v1", name: "Volkswagen Golf 8 R", price: 60000, desc: "Compacte nerveuse" },
+    { id: "v2", name: "Porsche 911 GT3 RS", price: 230000, desc: "Taillée pour la piste" },
+    { id: "v3", name: "Bugatti Chiron Sport", price: 3500000, desc: "Vitesse pure" }
+  ],
+  maisons: [
+    { id: "m1", name: "Villa avec Piscine", price: 850000, desc: "Superbe vue dégagée" },
+    { id: "m2", name: "Penthouse à New York", price: 4500000, desc: "Vue sur Central Park" },
+    { id: "m3", name: "Manoir à Bel-Air", price: 35000000, desc: "Héliport privé" }
+  ],
+  telephones: [
+    { id: "t1", name: "iPhone 17 Pro Max", price: 1500, desc: "Le dernier monstre d'Apple" },
+    { id: "t2", name: "Samsung Galaxy S26 Ultra", price: 1400, desc: "Le roi du zoom et de l'IA" },
+    { id: "t3", name: "Google Pixel 10 Pro", price: 1100, desc: "Photophone ultime" }
+  ],
+  consoles: [
+    { id: "g1", name: "PlayStation 5 Pro", price: 800, desc: "4K 60FPS sans compromis" },
+    { id: "g2", name: "Nintendo Switch 2", price: 400, desc: "La polyvalence portable" },
+    { id: "g3", name: "PC Master Race RTX 5090", price: 5000, desc: "Puissance absolue hors catégorie" }
+  ],
+  vetements: [
+    { id: "f1", name: "Sweat à capuche Nike Tech", price: 120, desc: "Le classique du quotidien" },
+    { id: "f2", name: "Veste Moncler Maya", price: 1500, desc: "Pour rester au chaud avec style" },
+    { id: "f3", name: "Costume sur mesure Gucci", price: 4500, desc: "Élégance maximale en rendez-vous" }
+  ],
+  bijoux: [
+    { id: "b1", name: "Chaîne en Or 18k", price: 2500, desc: "Discrète mais précieuse" },
+    { id: "b2", name: "Rolex Submariner Date", price: 15000, desc: "L'horlogerie intemporelle" },
+    { id: "b3", name: "Bague Diamant Émeraude", price: 85000, desc: "Éclat spectaculaire" }
+  ],
+  supermarche: [
+    { id: "s1", name: "Pack de Ramen", price: 15, desc: "Le repas économique" },
+    { id: "s2", name: "Monster Energy", price: 25, desc: "Énergie instantanée" },
+    { id: "s3", name: "Caviar Almas Premium", price: 25000, desc: "Luxe gastronomique" }
+  ],
+  cafes: [
+    { id: "c1", name: "Café Latte Macchiato", price: 18, desc: "Crémeux à souhait" },
+    { id: "c2", name: "Bubble Tea Matcha", price: 30, desc: "Perles de tapioca fraîches" },
+    { id: "c3", name: "Gâteau Feuille d'Or", price: 250, desc: "Douceur haut de gamme" }
+  ],
+  collections: [
+    { id: "a1", name: "Katana Forgé Traditionnel", price: 8000, desc: "Acier plié 1000 fois" },
+    { id: "a2", name: "Armure de Samouraï Edo", price: 45000, desc: "Pièce historique certifiée" },
+    { id: "a3", name: "Sabre Laser Réplique Master", price: 1200, desc: "Éclairage NeoPixel réaliste" }
+  ],
+  animaux: [
+    { id: "p1", name: "Chiot Golden Retriever", price: 1800, desc: "Le compagnon le plus fidèle" },
+    { id: "p2", name: "Chat de race Main Coon", price: 2200, desc: "Un géant doux et majestueux" },
+    { id: "p3", name: "Bébé Tigre Blanc (Permis)", price: 75000, desc: "Exotisme absolu dans votre domaine" }
+  ]
+};
+
+function formatMsg(title, content) {
+  return `🛒 ═══ 𝗠𝗔𝗚𝗔𝗦𝗜𝗡 𝗚𝗟𝗢𝗕𝗔𝗟 ═══ 🛒\n\n╔══ 🌟 ${title} ══╗\n${content}\n╚══════════════════════╝`;
+}
+
+module.exports = {
+  config: {
+    name: "shopping",
+    aliases: ["shop", "magasin", "possede", "possède"],
+    version: "2.0",
+    author: "Shade × ChatGPT",
+    role: 0,
+    category: "economy",
+    shortDescription: "Système de magasin premium à 10 rayons",
+    guide: "{pn} list [rayon] (Affiche un catalogue)\n{pn} buy [ID] (Acheter un article)\n{pn} possède (Affiche vos possessions)"
+  },
+
+  onStart: async function ({ message, event, args, usersData }) {
+    const { senderID } = event;
+    const action = args[0] ? args[0].toLowerCase() : null;
+
+    const userData = await usersData.get(senderID);
+    if (!userData) return message.reply("❌ Impossible de charger votre profil économique.");
+
+    // Initialisation structurelle de l'inventaire
+    if (!userData.customData) userData.customData = {};
+    if (!userData.customData.shop) {
+      userData.customData.shop = {};
+      Object.keys(SHOP_ITEMS).forEach(cat => {
+        userData.customData.shop[cat] = [];
+      });
+    }
+    const inv = userData.customData.shop;
+
+    // ==========================================
+    // 📋 COMMANDE : AFFICHAGE DES POSSESSIONS
+    // ==========================================
+    if (action === "possede" || action === "possède" || event.body.toLowerCase().includes("possede")) {
+      let txt = "Voici tout ce que vous possédez actuellement :\n\n";
+      let empty = true;
+
+      for (const [category, items] of Object.entries(inv)) {
+        if (items && items.length > 0) {
+          empty = false;
+          // Comptage des occurrences pour regrouper les items identiques (ex: Ramen x3)
+          const counts = {};
+          items.forEach(i => counts[i.name] = (counts[i.name] || 0) + 1);
+
+          txt += `📂 **${category.toUpperCase()} :**\n`;
+          for (const [name, count] of Object.entries(counts)) {
+            txt += ` • ${name} ${count > 1 ? `(x${count})` : ""}\n`;
+          }
+          txt += "\n";
+        }
+      }
+
+      if (empty) return message.reply(formatMsg("VOS BIENS", "📦 Votre inventaire est totalement vide pour le moment !"));
+      return message.reply(formatMsg("VOS BIENS", txt.trim()));
+    }
+
+    // ==========================================
+    // 🛍️ COMMANDE : LISTER UN RAYON (LIST)
+    // ==========================================
+    if (action === "list") {
+      const rayon = args[1] ? args[1].toLowerCase() : null;
+
+      if (!rayon || !SHOP_ITEMS[rayon]) {
+        let menu = "Spécifiez un rayon valide à lister parmi les 10 suivants :\n\n";
+        Object.keys(SHOP_ITEMS).forEach(cat => menu += `• \`/shop list ${cat}\`\n`);
+        menu += `\n💡 *Pour acheter un objet, utilisez :* \`/shop buy [ID]\`\n📌 *Pour voir vos objets :* \`/shop possede\``;
+        return message.reply(formatMsg("10 RAYONS DISPONIBLES", menu));
+      }
+
+      let catalog = `--- CATALOGUE : ${rayon.toUpperCase()} ---\n\n`;
+      SHOP_ITEMS[rayon].forEach(item => {
+        catalog += `📦 **${item.name}**\n🔹 ID : \`${item.id}\` | 💰 Prix : **${item.price.toLocaleString()}$**\n💬 *${item.desc}*\n\n`;
+      });
+
+      return message.reply(formatMsg(rayon.toUpperCase(), catalog.trim()));
+    }
+
+    // ==========================================
+    // 💳 COMMANDE : ACHETER UN ARTICLE (BUY)
+    // ==========================================
+    if (action === "buy") {
+      const targetId = args[1] ? args[1].toLowerCase() : null;
+      if (!targetId) return message.reply("💡 Exemple d'achat : `/shop buy v2` (pour l'article correspondant).");
+
+      let foundItem = null;
+      let itemCategory = null;
+
+      for (const [cat, items] of Object.entries(SHOP_ITEMS)) {
+        const item = items.find(i => i.id === targetId);
+        if (item) {
+          foundItem = item;
+          itemCategory = cat;
+          break;
+        }
+      }
+
+      if (!foundItem) return message.reply("❌ ID introuvable dans les rayons du magasin.");
+
+      const wallet = userData.money || 0;
+      if (wallet < foundItem.price) {
+        return message.reply(`💔 Solde insuffisant. Prix : **${foundItem.price.toLocaleString()}$**. Solde : **${wallet.toLocaleString()}$**.`);
+      }
+
+      // Ajout à l'inventaire de la catégorie
+      if (!inv[itemCategory]) inv[itemCategory] = [];
+      inv[itemCategory].push({ id: foundItem.id, name: foundItem.name, date: Date.now() });
+
+      // Retrait de l'argent et sauvegarde
+      userData.money = wallet - foundItem.price;
+      await usersData.set(senderID, userData);
+
+      return message.reply(`🎉 **ACHAT VALIDÉ !**\n\nVous venez d'acquérir : **${foundItem.name}** !\n📉 Montant déduit : -**${foundItem.price.toLocaleString()}$**\n💳 Solde restant : **${userData.money.toLocaleString()}$**.\n\nType \`/shop possede\` pour voir tes biens.`);
+    }
+
+    // Menu d'accueil par défaut si aucune option n'est entrée
+    let defaultMenu = `Bienvenue chez le grossiste du bot !\nPortefeuille : ** ${(userData.money || 0).toLocaleString()}$**\n\n🏬 **Explorez nos 10 Rayons d'achats :**\n`;
+    Object.keys(SHOP_ITEMS).forEach(cat => defaultMenu += `• \`/shop list ${cat}\`\n`);
+    defaultMenu += `\n⚙️ **Commandes de gestion :**\n• \`/shop buy [ID]\` : Acheter l'item\n• \`/shop possede\` : Voir vos possessions globales`;
+
+    return message.reply(formatMsg("ACCUEIL SHOPPING", defaultMenu));
+  }
+};
