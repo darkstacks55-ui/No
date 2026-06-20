@@ -1,3 +1,13 @@
+/**
+ * @author Shade & AI
+ * @title Transfert d'argent Canvas
+ * @name give
+ * @class give
+ * @version 1.1.0
+ * @description Donne de l'argent de portefeuille à un autre utilisateur avec un rendu visuel.
+ * @usage give [@tag/reply] [montant]
+ */
+
 const { createCanvas, loadImage } = require("canvas");  
 const path = require("path");  
 const fs = require("fs");  
@@ -5,10 +15,10 @@ const fs = require("fs");
 module.exports = {
   config: {  
     name: "give",  
-    version: "1.0.3",  
+    version: "1.1.0",  
     role: 0, 
     author: "Shade & AI",  
-    description: "Donne de l'argent via tag ou réponse (reply) avec génération d'image",  
+    description: "Donne de l'argent via tag ou réponse (reply) avec génération d'image Canvas",  
     category: "economy",  
     guide: {
       fr: "{p}{n} [@tag] [montant] ou en répondant à un message : {p}{n} [montant]"
@@ -22,70 +32,69 @@ module.exports = {
     let targetID = null;
     let amount = null;
 
-    // 1. Détection de la cible et du montant (soit par Reply, soit par Tag)
+    // 1. Détection de la cible et extraction propre du montant numérique
     if (type === "message_reply" && messageReply) {
       targetID = messageReply.senderID;
-      amount = parseInt(args[0]);
+      // Cherche le premier nombre valide présent dans les arguments
+      const foundNumber = args.find(arg => !isNaN(parseInt(arg)));
+      amount = foundNumber ? parseInt(foundNumber) : null;
     } else if (mentions && Object.keys(mentions).length > 0) {
       targetID = Object.keys(mentions)[0];
-      amount = parseInt(args[1]);
+      // Pour un tag, on prend généralement l'argument qui suit le tag textuel
+      const filterArgs = args.filter(arg => !arg.includes("@"));
+      const foundNumber = filterArgs.find(arg => !isNaN(parseInt(arg)));
+      amount = foundNumber ? parseInt(foundNumber) : null;
     }
 
-    // Si aucune cible n'est trouvée
+    // Validation des données d'entrée
     if (!targetID) {
-      return api.sendMessage("❌ Tag la personne ou répond à son message pour lui donner 🫶", threadID, messageID);  
+      return api.sendMessage("❌ Tag la personne ou réponds à son message pour lui donner de l'argent 🫶", threadID, messageID);  
     }
 
-    // Auto-don interdit
     if (targetID === senderID) {
-      return api.sendMessage("❌ Vous ne pouvez pas vous donner de l'argent à vous-même.", threadID, messageID);
+      return api.sendMessage("❌ L'auto-donation est bloquée par la banque centrale.", threadID, messageID);
     }
 
-    // Vérification du montant
-    if (isNaN(amount) || amount <= 0) {
-      return api.sendMessage("❌ Montant invalide. Exemple: /give @nom 500 ou en répondant à un message: /give 500", threadID, messageID);  
+    if (!amount || isNaN(amount) || amount <= 0) {
+      return api.sendMessage("❌ Montant invalide.\nExemple : /give @nom 500\nEn réponse : /give 500", threadID, messageID);  
     }
     
-    // 2. Récupération et vérification de l'argent via usersData (Standard GoatBot)
-    const senderData = await usersData.get(senderID);
-    const targetData = await usersData.get(targetID);
+    // 2. Récupération et structuration des profils financiers
+    let senderData = await usersData.get(senderID) || {};
+    let targetData = await usersData.get(targetID) || {};
 
-    if (!senderData) return api.sendMessage("❌ Impossible de charger vos données financières.", threadID, messageID);
-    if (!targetData) return api.sendMessage("❌ Impossible de charger les données financières de la cible.", threadID, messageID);
-
-    // Initialisation de la propriété money si elle n'existe pas
     if (senderData.money === undefined) senderData.money = 0;
     if (targetData.money === undefined) targetData.money = 0;
 
     if (senderData.money < amount) {
-      return api.sendMessage(`❌ T'as pas assez de thunes (Solde actuel : ${senderData.money} $)`, threadID, messageID);  
+      return api.sendMessage(`❌ Fonds insuffisants dans ton portefeuille. (Solde actuel : ${senderData.money.toLocaleString()} $)`, threadID, messageID);  
     }
     
-    // 3. Transfert d'argent et sauvegarde
+    // 3. Débit / Crédit et mise à jour de la base de données
     senderData.money -= amount;
     targetData.money += amount;
     
-    await usersData.set(senderID, senderData);
-    await usersData.set(targetID, targetData);
+    await usersData.set(senderID, { money: senderData.money, data: senderData.data || {}, exp: senderData.exp || 0 });
+    await usersData.set(targetID, { money: targetData.money, data: targetData.data || {}, exp: targetData.exp || 0 });
     
-    const senderName = await Users.getNameUser(senderID);
-    const targetName = await Users.getNameUser(targetID);
+    // Récupération des pseudos
+    const senderName = (await Users.getNameUser(senderID)) || "Donateur Anonyme";
+    const targetName = (await Users.getNameUser(targetID)) || "Bénéficiaire";
     
-    // Dossier cache
+    // Initialisation sécurisée du dossier cache
     const cacheDir = path.join(__dirname, "cache");
-    if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir, { recursive: true });
-    }
+    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
 
-    // === CANVAS AVEC AVATARS ===  
+    // === GÉNÉRATION DE L'INTERFACE CANVAS ===  
     const canvas = createCanvas(700, 300);  
     const ctx = canvas.getContext("2d");  
     
+    // Fond sombre
     ctx.fillStyle = "#0f0f0f";  
     ctx.fillRect(0, 0, 700, 300);  
     
-    const senderAvatarUrl = `https://graph.facebook.com/${senderID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
-    const targetAvatarUrl = `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
+    const senderAvatarUrl = `https://graph.facebook.com/${senderID}/picture?width=256&height=256`;
+    const targetAvatarUrl = `https://graph.facebook.com/${targetID}/picture?width=256&height=256`;
 
     try {
       const senderAvatar = await loadImage(senderAvatarUrl);  
@@ -104,12 +113,13 @@ module.exports = {
       drawCircleImg(senderAvatar, 150, 150, 60);  
       drawCircleImg(targetAvatar, 550, 150, 60);  
     } catch (e) {
-      ctx.fillStyle = "#333";
-      ctx.beginPath(); ctx.arc(150, 150, 60, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(550, 150, 60, 0, Math.PI*2); ctx.fill();
+      // Fallback si l'API Facebook Graph ne renvoie pas l'image immédiatement
+      ctx.fillStyle = "#262626";
+      ctx.beginPath(); ctx.arc(150, 150, 60, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(550, 150, 60, 0, Math.PI * 2); ctx.fill();
     }
     
-    // Flèche + montant  
+    // Ligne de liaison graphique  
     ctx.strokeStyle = "#00ff88";  
     ctx.lineWidth = 4;  
     ctx.beginPath();  
@@ -117,29 +127,31 @@ module.exports = {
     ctx.lineTo(460, 150);  
     ctx.stroke();  
     
+    // Montant de la transaction  
     ctx.fillStyle = "#00ff88";  
     ctx.font = "bold 35px Arial";  
-    ctx.fillText(`${amount.toLocaleString()} $`, 300, 160);  
+    ctx.textAlign = "center";
+    ctx.fillText(`${amount.toLocaleString()} $`, 350, 160);  
     
+    // Titre de l'opération  
     ctx.fillStyle = "#fff";  
     ctx.font = "bold 38px Arial";  
-    ctx.fillText("DON", 320, 80);  
+    ctx.fillText("DONATION", 350, 70);  
     
-    ctx.fillStyle = "#ccc";  
-    ctx.font = "22px Arial";  
-    ctx.fillText(`${senderName} → ${targetName}`, 230, 260);  
+    // Libellé des acteurs impliqués  
+    ctx.fillStyle = "#aaaaaa";  
+    ctx.font = "20px Arial";  
+    ctx.fillText(`${senderName.substring(0, 15)} → ${targetName.substring(0, 15)}`, 350, 250);  
     
+    // Sauvegarde et envoi du fichier
     const pathSave = path.join(cacheDir, `give_${senderID}_${targetID}.png`);  
-    const stream = fs.createWriteStream(pathSave);  
-    canvas.createPNGStream().pipe(stream);  
-    
-    stream.on("finish", () => {  
-      api.sendMessage({  
-        body: `${senderName} a donné ${amount.toLocaleString()}$ à ${targetName} 💸`,  
-        attachment: fs.createReadStream(pathSave)  
-      }, threadID, () => {
-        if (fs.existsSync(pathSave)) fs.unlinkSync(pathSave);
-      }, messageID);  
-    });  
+    fs.writeFileSync(pathSave, canvas.toBuffer("image/png"));
+
+    return api.sendMessage({  
+      body: `💸 **${senderName}** a envoyé **${amount.toLocaleString()}$** à **${targetName}** !`,  
+      attachment: fs.createReadStream(pathSave)  
+    }, threadID, () => {
+      try { if (fs.existsSync(pathSave)) fs.unlinkSync(pathSave); } catch (err) {}
+    }, messageID);  
   }
 };
