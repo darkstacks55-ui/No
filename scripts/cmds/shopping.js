@@ -198,10 +198,27 @@ const SHOP_ITEMS = {
   { id: "a20", name: "Trône Impérial Miniature Or", price: 500000, desc: "Chef-d'œuvre pour collectionneur ultime" }
 ],
   animaux: [
-    { id: "p1", name: "Chiot Golden Retriever", price: 1800, desc: "Le compagnon le plus fidèle" },
-    { id: "p2", name: "Chat de race Main Coon", price: 2200, desc: "Un géant doux et majestueux" },
-    { id: "p3", name: "Bébé Tigre Blanc (Permis)", price: 75000, desc: "Exotisme absolu dans votre domaine" }
-  ]
+  { id: "p1", name: "Chiot Golden Retriever", price: 1800, desc: "Le compagnon le plus fidèle" },
+  { id: "p2", name: "Chat de race Maine Coon", price: 2200, desc: "Un géant doux et majestueux" },
+  { id: "p3", name: "Bébé Tigre Blanc (Permis)", price: 75000, desc: "Exotisme absolu dans votre domaine" },
+  { id: "p4", name: "Labrador Chocolat", price: 2000, desc: "Joueur et affectueux" },
+  { id: "p5", name: "Husky Sibérien", price: 3500, desc: "Énergique et magnifique" },
+  { id: "p6", name: "Chat Bengal", price: 5000, desc: "Apparence de félin sauvage" },
+  { id: "p7", name: "Perroquet Ara Bleu", price: 6500, desc: "Coloré et intelligent" },
+  { id: "p8", name: "Fennec", price: 12000, desc: "Petit renard du désert" },
+  { id: "p9", name: "Paon Royal", price: 8000, desc: "Beauté spectaculaire" },
+  { id: "p10", name: "Cheval Arabe", price: 25000, desc: "Élégance et rapidité" },
+  { id: "p11", name: "Alpaga Blanc", price: 15000, desc: "Doux et attachant" },
+  { id: "p12", name: "Loup Apprivoisé", price: 45000, desc: "Rare et impressionnant" },
+  { id: "p13", name: "Panthère Noire (Permis)", price: 95000, desc: "Mystérieuse et prestigieuse" },
+  { id: "p14", name: "Lion Blanc (Permis)", price: 150000, desc: "Symbole de puissance" },
+  { id: "p15", name: "Aigle Royal", price: 35000, desc: "Maître des cieux" },
+  { id: "p16", name: "Panda Géant", price: 250000, desc: "Trésor vivant exceptionnel" },
+  { id: "p17", name: "Dragon de Komodo", price: 180000, desc: "Le plus grand lézard du monde" },
+  { id: "p18", name: "Licorne Cristalline", price: 500000, desc: "Créature légendaire rare" },
+  { id: "p19", name: "Phénix Éternel", price: 1000000, desc: "Oiseau mythique de feu" },
+  { id: "p20", name: "Dragon Céleste", price: 5000000, desc: "La créature ultime des collectionneurs" }
+],
 };
 
 function formatMsg(title, content) {
