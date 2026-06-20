@@ -1,9 +1,26 @@
 const SHOP_ITEMS = {
   voitures: [
-    { id: "v1", name: "Volkswagen Golf 8 R", price: 60000, desc: "Compacte nerveuse" },
-    { id: "v2", name: "Porsche 911 GT3 RS", price: 230000, desc: "Taillée pour la piste" },
-    { id: "v3", name: "Bugatti Chiron Sport", price: 3500000, desc: "Vitesse pure" }
-  ],
+  { id: "v1", name: "Volkswagen Golf 8 R", price: 60000, desc: "Compacte nerveuse" },
+  { id: "v2", name: "Porsche 911 GT3 RS", price: 230000, desc: "Taillée pour la piste" },
+  { id: "v3", name: "Bugatti Chiron Sport", price: 3500000, desc: "Vitesse pure" },
+  { id: "v4", name: "Toyota Supra MK5", price: 55000, desc: "Sportive japonaise iconique" },
+  { id: "v5", name: "Nissan GT-R R35", price: 120000, desc: "Godzilla de la route" },
+  { id: "v6", name: "Lamborghini Huracan EVO", price: 260000, desc: "Supercar agressive" },
+  { id: "v7", name: "Ferrari F8 Tributo", price: 280000, desc: "Élégance et puissance" },
+  { id: "v8", name: "McLaren 720S", price: 300000, desc: "Aérodynamique extrême" },
+  { id: "v9", name: "Audi RS7 Sportback", price: 130000, desc: "Berline ultra rapide" },
+  { id: "v10", name: "Mercedes-AMG GT Black Series", price: 350000, desc: "Piste et luxe combinés" },
+  { id: "v11", name: "BMW M4 Competition", price: 90000, desc: "Coupé sportif allemand" },
+  { id: "v12", name: "Dodge Challenger SRT Hellcat", price: 80000, desc: "Muscle car brut" },
+  { id: "v13", name: "Chevrolet Corvette C8", price: 70000, desc: "Supercar américaine abordable" },
+  { id: "v14", name: "Ford Mustang Shelby GT500", price: 85000, desc: "Puissance américaine légendaire" },
+  { id: "v15", name: "Honda NSX", price: 160000, desc: "Hybrid performance japonaise" },
+  { id: "v16", name: "Koenigsegg Jesko", price: 2800000, desc: "Hypercar extrême" },
+  { id: "v17", name: "Pagani Huayra", price: 2700000, desc: "Art automobile italien" },
+  { id: "v18", name: "Aston Martin DBS Superleggera", price: 320000, desc: "Luxe britannique puissant" },
+  { id: "v19", name: "Rolls-Royce Wraith", price: 350000, desc: "Luxe et confort absolu" },
+  { id: "v20", name: "Tesla Model S Plaid", price: 110000, desc: "Électrique ultra rapide" }
+],
   maisons: [
     { id: "m1", name: "Villa avec Piscine", price: 850000, desc: "Superbe vue dégagée" },
     { id: "m2", name: "Penthouse à New York", price: 4500000, desc: "Vue sur Central Park" },
