@@ -9,56 +9,51 @@ app.get("/pinterest", async (req, res) => {
   const query = req.query.query;
 
   if (!query) {
-    return res.json({ error: "no query" });
+    return res.status(400).json({ error: "Le paramètre 'query' est manquant." });
   }
 
+  // On force la recherche sur Pinterest
+  const targetQuery = `${query} site:pinterest.com`; 
+  const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
   try {
-    // 🔥 STEP 1: get token vqd
+    // STEP 1: Récupération du token VQD
     const html = await axios.get(
-      `https://duckduckgo.com/?q=${encodeURIComponent(query)}&iax=images&ia=images`,
-      {
-        headers: {
-          "User-Agent": "Mozilla/5.0"
-        }
-      }
+      `https://duckduckgo.com/?q=${encodeURIComponent(targetQuery)}&iax=images&ia=images`,
+      { headers: { "User-Agent": userAgent } }
     );
 
     const match = html.data.match(/vqd='(.*?)'/);
-
     if (!match) {
-      return res.json({ error: "no token found" });
+      return res.status(500).json({ error: "Impossible de récupérer le token VQD." });
     }
 
     const vqd = match[1];
 
-    // 🔥 STEP 2: real image API
+    // STEP 2: Appel à l'API de DuckDuckGo
     const img = await axios.get(
-      `https://duckduckgo.com/i.js?l=us-en&o=json&q=${encodeURIComponent(query)}&vqd=${vqd}&p=1`,
+      `https://duckduckgo.com/i.js?l=fr-fr&o=json&q=${encodeURIComponent(targetQuery)}&vqd=${vqd}&p=1`,
       {
         headers: {
-          "User-Agent": "Mozilla/5.0",
+          "User-Agent": userAgent,
           "Referer": "https://duckduckgo.com/"
         }
       }
     );
 
-    const images = img.data.results.map(i => i.image);
+    // Extraction des images
+    const images = img.data.results ? img.data.results.map(i => i.image) : [];
 
     res.json({
       query,
+      count: images.length,
       data: images.slice(0, 30)
     });
 
   } catch (e) {
     res.status(500).json({
-      error: "failed",
+      error: "Erreur lors de la récupération des données",
       message: e.message
     });
   }
-});
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("🔥 Pinterest API running on port", PORT);
 });
