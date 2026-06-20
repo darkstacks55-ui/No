@@ -12,7 +12,7 @@ module.exports = {
     config: {
         name: "bank",
         version: "2.0.0",
-        author: "System",
+        author: "Shade",
         countDown: 5,
         role: 0,
         description: "Comprehensive modular banking and financial ecosystem",
@@ -90,3 +90,81 @@ module.exports = {
             }
             return userData;
         }
+
+        try {
+            let senderProfile = await getUserProfile(senderID);
+            senderProfile = await tickPassiveIncome(senderProfile);
+
+            // Help Index Menu
+            if (!subCommand || subCommand === "help") {
+                const helpText = 
+                    "🏦 【 ADVANCED BANKING & ECONOMY SYSTEM 】 🏦\n\n" +
+                    "💰 ━ ECONOMY CORE\n" +
+                    " ├ balance : Check cash, bank accounts, credit scores\n" +
+                    " ├ deposit <amt/all> : Secure cash into your bank vault\n" +
+                    " ├ withdraw <amt/all> : Liquidate funds to wallet asset\n" +
+                    " ├ transfer <@tag> <amt> : Wire funds securely to another user\n" +
+                    " ├ daily : Claim your basic daily universal basic income\n" +
+                    " └ work : Execute specialized shifts for immediate capital\n\n" +
+                    "🏦 ━ BANKING SERVICES\n" +
+                    " ├ loan <amt> : Apply for capital backing based on credit worthiness\n" +
+                    " ├ repay <amt/all> : Liquidate structural debt obligations\n" +
+                    " ├ history : Audit your account's detailed transactions\n" +
+                    " ├ insurance : Buy protection against heist risk (Cost: $5,000)\n" +
+                    " └ leaderboard : Compare regional monetary asset listings\n\n" +
+                    "📊 ━ TRADING & ENTERPRISE\n" +
+                    " ├ rob <@tag> : Execute high-risk expropriation on targets\n" +
+                    " ├ invest [stocks/crypto/bonds] <amt> : Capital market vehicles\n" +
+                    " ├ business [buy/list] : Acquire passive enterprise streams\n" +
+                    " ├ property [buy/list] : Real estate commercial operations\n" +
+                    " └ luxury [buy/list] : High-end tangible items & assets\n\n" +
+                    "🧠 ━ METRICS & ACHIEVEMENTS\n" +
+                    " ├ achievements : View earned historic operational badges\n" +
+                    " └ rep <@tag> : Endorse peer networks to increment reputation\n\n" +
+                    "💡 Use commands precisely, parameters are strict.";
+                return api.sendMessage(helpText, threadID, messageID);
+            }
+
+            switch (subCommand) {
+                case "balance": {
+                    const balanceMsg = 
+                        "💳 【 FINANCIAL BALANCE SHEET 】 💳\n" +
+                        `👤 Holder: ${global.data.userName.get(senderID) || "Account Holder"}\n` +
+                        `💵 Wallet Liquid Cash: $${senderProfile.money.toLocaleString()}\n` +
+                        `🏛️ Secure Bank Holding: $${senderProfile.data.bank.balance.toLocaleString()}\n` +
+                        `📉 Active Debt Liability: $${senderProfile.data.bank.loan.principal.toLocaleString()}\n` +
+                        `📈 Credit Evaluation Score: ${senderProfile.data.bank.creditScore} pts\n` +
+                        `🛡️ Account Insurance: ${senderProfile.data.bank.insurance ? "ACTIVE ✅" : "INACTIVE ❌"}\n` +
+                        `🌟 Social Reputation Index: ${senderProfile.data.reputation} REP`;
+                    return api.sendMessage(balanceMsg, threadID, messageID);
+                }
+
+                case "deposit": {
+                    const amountInput = args[1];
+                    if (!amountInput) return api.sendMessage("❌ Provide numerical amount or 'all'.", threadID, messageID);
+                    let amt = amountInput.toLowerCase() === "all" ? senderProfile.money : parseInt(amountInput);
+                    if (isNaN(amt) || amt <= 0) return api.sendMessage("❌ Invalid processing amount designated.", threadID, messageID);
+                    if (senderProfile.money < amt) return api.sendMessage("❌ Insufficient liquid wallet funds available.", threadID, messageID);
+
+                    senderProfile.money -= amt;
+                    senderProfile.data.bank.balance += amt;
+                    senderProfile.data.bank.history.push({ type: "Deposit", amount: amt, time: new Date().toISOString() });
+                    await usersData.set(senderID, senderProfile);
+
+                    return api.sendMessage(`✅ Securely deposited $${amt.toLocaleString()} into your vault account.`, threadID, messageID);
+                }
+
+                case "withdraw": {
+                    const amountInput = args[1];
+                    if (!amountInput) return api.sendMessage("❌ Provide numerical amount or 'all'.", threadID, messageID);
+                    let amt = amountInput.toLowerCase() === "all" ? senderProfile.data.bank.balance : parseInt(amountInput);
+                    if (isNaN(amt) || amt <= 0) return api.sendMessage("❌ Invalid processing amount designated.", threadID, messageID);
+                    if (senderProfile.data.bank.balance < amt) return api.sendMessage("❌ Bank ledger reflects insufficient funds.", threadID, messageID);
+
+                    senderProfile.data.bank.balance -= amt;
+                    senderProfile.money += amt;
+                    senderProfile.data.bank.history.push({ type: "Withdrawal", amount: amt, time: new Date().toISOString() });
+                    await usersData.set(senderID, senderProfile);
+
+                    return api.sendMessage(`✅ Liquidation approved. $${amt.toLocaleString()} extracted to wallet.`, threadID, messageID);
+                    }
