@@ -1,19 +1,20 @@
 module.exports = {
   config: {
     name: "set",
-    version: "2.0",
-    author: "Shade",
+    version: "2.1.0",
+    author: "Shade & AI",
     shortDescription: "Gestion des données admin",
-    longDescription: "Définir l'argent, l'expérience ou des variables personnalisées d'un utilisateur (admin uniquement)",
+    longDescription: "Définir l'argent, l'expérience ou des variables personnalisées d'un utilisateur sans écraser ses données.",
     category: "settings",
     guide: {
       fr: "{p}set money [montant] [@utilisateur]\n{p}set exp [montant] [@utilisateur]\n{p}set custom [variable] [valeur] [@utilisateur]"
     },
-    role: 2
+    role: 2 // Niveau Admin requis par le système
   },
 
   onStart: async function ({ api, event, args, usersData }) {
     try {
+      // Liste des UID des Admins suprêmes autorisés
       const ADMIN_UIDS = ["61573867120837"];
       
       if (!ADMIN_UIDS.includes(event.senderID.toString())) {
@@ -21,33 +22,59 @@ module.exports = {
       }
 
       const action = args[0]?.toLowerCase();
-      const amount = parseFloat(args[1]);
-      const targetID = Object.keys(event.mentions)[0] || event.senderID;
-      const userData = await usersData.get(targetID);
-
-      if (!userData) {
-        return api.sendMessage("❌ Utilisateur introuvable dans la base de données", event.threadID);
+      if (!action) {
+        return api.sendMessage("❌ Action manquante. Options : money, exp, custom", event.threadID);
       }
 
+      const targetID = Object.keys(event.mentions)[0] || event.senderID;
+      
+      // Récupération sécurisée des données actuelles pour éviter de les écraser
+      let userData = await usersData.get(targetID);
+      if (!userData) userData = {};
+      if (!userData.data) userData.data = {};
+
+      const name = (await usersData.getName?.(targetID)) || "Utilisateur";
+
       switch (action) {
-        case 'money':
+        case 'money': {
+          const amount = parseFloat(args[1]);
           if (isNaN(amount)) return api.sendMessage("❌ Montant invalide", event.threadID);
-          await usersData.set(targetID, { money: amount });
-          return api.sendMessage(`💰 Argent défini à ${amount} pour ${userData.name}`, event.threadID);
+          
+          // Sauvegarde en préservant le reste de l'objet
+          await usersData.set(targetID, {
+            ...userData,
+            money: amount
+          });
+          return api.sendMessage(`💰 Argent défini à ${amount.toLocaleString()} $ pour ${name}`, event.threadID);
+        }
 
-        case 'exp':
+        case 'exp': {
+          const amount = parseInt(args[1]);
           if (isNaN(amount)) return api.sendMessage("❌ Montant invalide", event.threadID);
-          await usersData.set(targetID, { exp: amount });
-          return api.sendMessage(`🌟 Expérience définie à ${amount} pour ${userData.name}`, event.threadID);
+          
+          await usersData.set(targetID, {
+            ...userData,
+            exp: amount
+          });
+          return api.sendMessage(`🌟 Expérience définie à ${amount.toLocaleString()} pour ${name}`, event.threadID);
+        }
 
-        case 'custom':
+        case 'custom': {
           const variable = args[1];
           const value = args[2];
           if (!variable || value === undefined) {
             return api.sendMessage("❌ Utilisation : {p}set custom [variable] [valeur] [@utilisateur]", event.threadID);
           }
-          await usersData.set(targetID, { [variable]: value });
-          return api.sendMessage(`🔧 Variable ${variable} définie à ${value} pour ${userData.name}`, event.threadID);
+          
+          // Modifie ou ajoute la variable dans l'objet "data" de l'utilisateur
+          userData.data[variable] = value;
+
+          await usersData.set(targetID, {
+            ...userData,
+            data: userData.data
+          });
+          return api.sendMessage(`🔧 Variable "${variable}" définie à "${value}" pour ${name}`, event.threadID);
+        }
 
         default:
           return api.sendMessage("❌ Action invalide. Options disponibles : money, exp, custom", event.threadID);
