@@ -395,7 +395,15 @@ module.exports = {
                     const operationalMode = args[1]?.toLowerCase();
                     const options = [
                         { identity: "Logistics Hub", price: 25000, yields: 450 },
-                        { identity: "AI Matrix Architecture", price: 100000, yields: 2100 }
+                        { identity: "AI Matrix Architecture", price: 100000, yields: 2100 },
+                        { identity: "Solar Energy Farm", price: 180000, yields: 3800 },
+                        { identity: "Cloud Computing Center", price: 350000, yields: 7200 },
+                        { identity: "International Shipping Port", price: 500000, yields: 10500 },
+                        { identity: "Luxury Hotel Chain", price: 750000, yields: 15000 },
+                        { identity: "Semiconductor Factory", price: 1200000, yields: 24000 },
+                        { identity: "Space Tourism Company", price: 3000000, yields: 60000 },
+                        { identity: "Quantum Research Facility", price: 5000000, yields: 100000 },
+                        { identity: "Interplanetary Mining Corporation", price: 10000000, yields: 220000 }
                     ];
 
                     if (operationalMode === "list") {
@@ -466,7 +474,7 @@ module.exports = {
                         { object: "Gold-Plated Helicopter", baseValue: 1800000 },
                         { object: "Space Tourism Ticket", baseValue: 750000 },
                         { object: "Diamond-Encrusted Watch", baseValue: 450000 }
-                     ];
+                    ];
 
                     if (operationalMode === "list") {
                         let presentation = "🏎️ 【 TANGIBLE EXCLUSIVES DECK 】 🏎️\n\n";
