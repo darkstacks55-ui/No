@@ -250,3 +250,68 @@ module.exports = {
 
                     return api.sendMessage(`🏦 Credit assessment complete. Approved funding parameters.\n💰 $${amt.toLocaleString()} loaded into central bank accounts. Current active debt accumulation applies.`, threadID, messageID);
                 }
+
+                    case "repay": {
+                    const amountInput = args[1];
+                    if (!amountInput) return api.sendMessage("❌ Specify settlement capital size or 'all'.", threadID, messageID);
+                    if (senderProfile.data.bank.loan.principal <= 0) return api.sendMessage("❌ Balance sheet displays zero debt obligations.", threadID, messageID);
+
+                    let amt = amountInput.toLowerCase() === "all" ? senderProfile.money : parseInt(amountInput);
+                    if (isNaN(amt) || amt <= 0) return api.sendMessage("❌ Outlining proper structural calculations required.", threadID, messageID);
+                    if (senderProfile.money < amt) return api.sendMessage("❌ Liquidity restriction. Wallet funds insufficient for repayment schema.", threadID, messageID);
+
+                    if (amt > senderProfile.data.bank.loan.principal) {
+                        amt = senderProfile.data.bank.loan.principal;
+                    }
+
+                    senderProfile.money -= amt;
+                    senderProfile.data.bank.loan.principal -= amt;
+                    senderProfile.data.bank.history.push({ type: "Debt Repayment", amount: amt, time: new Date().toISOString() });
+
+                    if (senderProfile.data.bank.loan.principal === 0) {
+                        senderProfile.data.bank.creditScore = Math.min(850, senderProfile.data.bank.creditScore + 45); // Boost credit on full pay
+                    }
+
+                    await usersData.set(senderID, senderProfile);
+                    return api.sendMessage(`✅ Loan transaction successful. Remitted $${amt.toLocaleString()}. Total Liability Remaining: $${senderProfile.data.bank.loan.principal.toLocaleString()}`, threadID, messageID);
+                }
+
+                case "history": {
+                    const historicalData = senderProfile.data.bank.history;
+                    if (historicalData.length === 0) return api.sendMessage("📭 Bank audit log reflects empty operational history.", threadID, messageID);
+                    const trace = historicalData.slice(-5).map(h => `• [${h.time.split("T")[0]}] ${h.type}: $${h.amount.toLocaleString()}`).join("\n");
+                    return api.sendMessage(`📋 【 RECENT GENERAL TRANSACTIONS LEDGER 】 📋\n\n${trace}`, threadID, messageID);
+                }
+
+                case "insurance": {
+                    if (senderProfile.data.bank.insurance) return api.sendMessage("🛡️ Asset portfolio already possesses modern insurance indemnity.", threadID, messageID);
+                    if (senderProfile.money < 5000) return api.sendMessage("❌ Underwriting premiums require $5,000 cash assets.", threadID, messageID);
+
+                    senderProfile.money -= 5000;
+                    senderProfile.data.bank.insurance = true;
+                    await usersData.set(senderID, senderProfile);
+                    return api.sendMessage("🛡️ Underwriting finalized. Protection parameters activated. Coverage shield against heists initialized.", threadID, messageID);
+                }
+
+                case "leaderboard": {
+                    const absoluteRegistry = await usersData.getAll();
+                    let systemArr = [];
+
+                    for (const entry of absoluteRegistry) {
+                        if (!entry || !entry.id) continue;
+                        let wealth = entry.money || 0;
+                        if (entry.data && entry.data.bank && entry.data.bank.balance) {
+                            wealth += entry.data.bank.balance;
+                        }
+                        const name = global.data.userName.get(entry.id) || `User-${entry.id.substring(0,4)}`;
+                        systemArr.push({ name, totalWealth: wealth });
+                    }
+
+                    systemArr.sort((x, y) => y.totalWealth - x.totalWealth);
+                    const leaderboardSlice = systemArr.slice(0, 10);
+                    let boardText = "📊 【 CENTRAL ECONOMIC WEALTH RANKS 】 📊\n\n";
+                    leaderboardSlice.forEach((user, idx) => {
+                        boardText += `${idx + 1}. ${user.name} ━ $${user.totalWealth.toLocaleString()}\n`;
+                    });
+                    return api.sendMessage(boardText, threadID, messageID);
+                }
