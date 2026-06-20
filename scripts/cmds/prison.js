@@ -14,7 +14,7 @@ module.exports = {
   config: {
     name: "prison",
     aliases: ["jail"],
-    version: "7.0 ultra final",
+    version: "7.1 ultra final",
     author: "Shade × ChatGPT",
     role: 0,
     category: "economy"
@@ -25,8 +25,7 @@ module.exports = {
     message,
     args,
     api,
-    usersData,
-    Currencies
+    usersData
   }) {
     const threadID = event.threadID;
     const senderID = event.senderID;
@@ -81,13 +80,15 @@ module.exports = {
 
       const fine = 100000;
 
-      const userData = await Currencies.getData(targetID);
+      // Récupération des données via usersData
+      const userData = await usersData.get(targetID);
       const money = userData.money || 0;
 
       if (money < fine)
         return message.reply("💔 Pas assez d'argent (100,000$ requis).");
 
-      await Currencies.setData(targetID, {
+      // Mise à jour de l'argent de manière sécurisée
+      await usersData.set(targetID, {
         money: money - fine
       });
 
@@ -141,7 +142,7 @@ module.exports = {
         text += `⛓️ ${name}\n`;
       }
 
-      return message.reply(text || "Vide");
+      return message.reply(text.trim() === "🚔 PRISON LIST" ? "Vide" : text);
     }
 
     // =========================
@@ -155,18 +156,25 @@ module.exports = {
     const name = await usersData.getName(targetID);
     const avatar = await usersData.getAvatarUrl(targetID);
 
-    const filePath = path.join(__dirname, "tmp", `${targetID}.png`);
+    const tmpDir = path.join(__dirname, "tmp");
+    await fs.ensureDir(tmpDir); // S'assure que le dossier 'tmp' existe pour éviter les crashs
+    const filePath = path.join(tmpDir, `${targetID}.png`);
 
-    const img = await axios.get(
-      `https://api.popcat.xyz/jail?image=${encodeURIComponent(avatar)}`,
-      { responseType: "arraybuffer" }
-    );
+    try {
+      const img = await axios.get(
+        `https://api.popcat.xyz/jail?image=${encodeURIComponent(avatar)}`,
+        { responseType: "arraybuffer" }
+      );
 
-    await fs.outputFile(filePath, img.data);
+      await fs.outputFile(filePath, img.data);
 
-    return message.reply({
-      body: `🚔 ${name} EST EN PRISON`,
-      attachment: fs.createReadStream(filePath)
-    });
+      return message.reply({
+        body: `🚔 ${name} EST EN PRISON`,
+        attachment: fs.createReadStream(filePath)
+      });
+    } catch (error) {
+      // Fallback si l'API d'image crash
+      return message.reply(`🚔 ${name} EST EN PRISON (Impossible de charger l'image)`);
+    }
   }
 };
