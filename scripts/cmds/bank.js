@@ -167,4 +167,86 @@ module.exports = {
                     await usersData.set(senderID, senderProfile);
 
                     return api.sendMessage(`✅ Liquidation approved. $${amt.toLocaleString()} extracted to wallet.`, threadID, messageID);
+                 }
+
+                    case "transfer": {
+                    const targetID = Object.keys(event.mentions)[0];
+                    const amountInput = args[2] || args[1]; 
+                    if (!targetID) return api.sendMessage("❌ Specify the recipient account via @tag.", threadID, messageID);
+                    let amt = parseInt(amountInput);
+                    if (isNaN(amt) || amt <= 0) return api.sendMessage("❌ Define valid positive balance for transfer architecture.", threadID, messageID);
+                    if (senderProfile.money < amt) return api.sendMessage("❌ Operational wallet liquidity failure for transaction.", threadID, messageID);
+
+                    let targetProfile = await getUserProfile(targetID);
+                    senderProfile.money -= amt;
+                    targetProfile.money += amt;
+
+                    senderProfile.data.bank.history.push({ type: "Wire Sent", amount: amt, time: new Date().toISOString() });
+                    targetProfile.data.bank.history.push({ type: "Wire Received", amount: amt, time: new Date().toISOString() });
+
+                    await usersData.set(senderID, senderProfile);
+                    await usersData.set(targetID, targetProfile);
+
+                    return api.sendMessage(`✅ Wire transfer processing complete. $${amt.toLocaleString()} safely shifted to target node.`, threadID, messageID);
+                }
+
+                case "daily": {
+                    const cooldown = 86400000; // 24 hours
+                    if (Date.now() - senderProfile.data.cooldowns.daily < cooldown) {
+                        const remaining = cooldown - (Date.now() - senderProfile.data.cooldowns.daily);
+                        const hrs = Math.floor(remaining / 3600000);
+                        const mins = Math.floor((remaining % 3600000) / 60000);
+                        return api.sendMessage(`⏳ Allocation locked. Return in ${hrs}h ${mins}m.`, threadID, messageID);
                     }
+
+                    const dailyReward = 2500;
+                    senderProfile.money += dailyReward;
+                    senderProfile.data.cooldowns.daily = Date.now();
+                    
+                    if (!senderProfile.data.achievements.includes("First Step")) {
+                        senderProfile.data.achievements.push("First Step");
+                    }
+                    
+                    await usersData.set(senderID, senderProfile);
+                    return api.sendMessage(`💰 Universal Basic Allocation added. Liquidated +$${dailyReward} to wallet context.`, threadID, messageID);
+                }
+
+                case "work": {
+                    const cooldown = 1800000; // 30 mins
+                    if (Date.now() - senderProfile.data.cooldowns.work < cooldown) {
+                        const remaining = cooldown - (Date.now() - senderProfile.data.cooldowns.work);
+                        return api.sendMessage(`⏳ Shift lock in place. Active cooling down: ${Math.floor(remaining / 60000)}m remaining.`, threadID, messageID);
+                    }
+
+                    const jobs = [
+                        { name: "Quantum Software Consultant", pay: [800, 1500] },
+                        { name: "High-Frequency Algorithm Trader", pay: [1200, 2200] },
+                        { name: "Deep Sea Extraction Engineer", pay: [600, 1100] },
+                        { name: "Cybersecurity Asset Red-Teamer", pay: [900, 1700] }
+                    ];
+                    const chosen = jobs[Math.floor(Math.random() * jobs.length)];
+                    const gain = Math.floor(Math.random() * (chosen.pay[1] - chosen.pay[0] + 1)) + chosen.pay[0];
+
+                    senderProfile.money += gain;
+                    senderProfile.data.cooldowns.work = Date.now();
+                    await usersData.set(senderID, senderProfile);
+
+                    return api.sendMessage(`🛠️ Job Deployment: Worked as a **${chosen.name}**.\n💵 Retainer Earned: +$${gain.toLocaleString()}`, threadID, messageID);
+                }
+
+                case "loan": {
+                    const amt = parseInt(args[1]);
+                    if (isNaN(amt) || amt <= 0) return api.sendMessage("❌ Declare precise funding requirements.", threadID, messageID);
+                    if (senderProfile.data.bank.loan.principal > 0) return api.sendMessage("❌ Existing credit line defaults. Clear outstanding debt balances first.", threadID, messageID);
+
+                    // Credit Score checks maximum allowed loan
+                    const maxLoan = Math.floor(senderProfile.data.bank.creditScore * 50);
+                    if (amt > maxLoan) return api.sendMessage(`❌ Credit Rating insufficient for request. Cap threshold at: $${maxLoan.toLocaleString()}`, threadID, messageID);
+
+                    senderProfile.data.bank.loan.principal = amt;
+                    senderProfile.data.bank.balance += amt;
+                    senderProfile.data.bank.history.push({ type: "Loan Disbursed", amount: amt, time: new Date().toISOString() });
+                    await usersData.set(senderID, senderProfile);
+
+                    return api.sendMessage(`🏦 Credit assessment complete. Approved funding parameters.\n💰 $${amt.toLocaleString()} loaded into central bank accounts. Current active debt accumulation applies.`, threadID, messageID);
+                }
