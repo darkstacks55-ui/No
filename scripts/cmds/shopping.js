@@ -176,10 +176,27 @@ const SHOP_ITEMS = {
   { id: "ff20", name: "Menu Diamant Signature", price: 5000, desc: "Le fast-food des millionnaires" }
 ],
   collections: [
-    { id: "a1", name: "Katana Forgé Traditionnel", price: 8000, desc: "Acier plié 1000 fois" },
-    { id: "a2", name: "Armure de Samouraï Edo", price: 45000, desc: "Pièce historique certifiée" },
-    { id: "a3", name: "Sabre Laser Réplique Master", price: 1200, desc: "Éclairage NeoPixel réaliste" }
-  ],
+  { id: "a1", name: "Katana Forgé Traditionnel", price: 8000, desc: "Acier plié 1000 fois" },
+  { id: "a2", name: "Armure de Samouraï Edo", price: 45000, desc: "Pièce historique certifiée" },
+  { id: "a3", name: "Sabre Laser Réplique Master", price: 1200, desc: "Éclairage NeoPixel réaliste" },
+  { id: "a4", name: "Casque Viking Authentique", price: 12000, desc: "Vestige des guerriers nordiques" },
+  { id: "a5", name: "Pièce d'Or Romaine", price: 3500, desc: "Monnaie antique rare" },
+  { id: "a6", name: "Masque Japonais Oni", price: 2500, desc: "Art traditionnel japonais" },
+  { id: "a7", name: "Statue Dragon de Jade", price: 18000, desc: "Symbole de prospérité" },
+  { id: "a8", name: "Carte Pokémon Première Édition", price: 75000, desc: "Objet culte des collectionneurs" },
+  { id: "a9", name: "Figurine Édition Limitée", price: 5000, desc: "Numérotée et rare" },
+  { id: "a10", name: "Montre de Poche Royale", price: 22000, desc: "Élégance d'une autre époque" },
+  { id: "a11", name: "Couronne Médiévale Replica", price: 15000, desc: "Digne d'un roi" },
+  { id: "a12", name: "Cristal Mystique Ancien", price: 9000, desc: "Pierre fascinante et rare" },
+  { id: "a13", name: "Manuscrit Enluminé", price: 30000, desc: "Œuvre historique précieuse" },
+  { id: "a14", name: "Échiquier en Ivoire", price: 25000, desc: "Pièce d'exception" },
+  { id: "a15", name: "Casque de Chevalier", price: 17000, desc: "Héritage médiéval" },
+  { id: "a16", name: "Statue Pharaon Dorée", price: 60000, desc: "Trésor inspiré de l'Égypte antique" },
+  { id: "a17", name: "Carte Yu-Gi-Oh! Fantôme Rare", price: 85000, desc: "Extrêmement recherchée" },
+  { id: "a18", name: "Masque Africain Tribal", price: 14000, desc: "Art ancestral unique" },
+  { id: "a19", name: "Diamant Brut de Collection", price: 150000, desc: "Pierre exceptionnelle" },
+  { id: "a20", name: "Trône Impérial Miniature Or", price: 500000, desc: "Chef-d'œuvre pour collectionneur ultime" }
+],
   animaux: [
     { id: "p1", name: "Chiot Golden Retriever", price: 1800, desc: "Le compagnon le plus fidèle" },
     { id: "p2", name: "Chat de race Main Coon", price: 2200, desc: "Un géant doux et majestueux" },
