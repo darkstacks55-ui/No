@@ -277,28 +277,29 @@ if (config.autoRestart) {
 	const parentIdGoogleDrive = await utils.drive.checkAndCreateParentFolder("GoatBot");
 	utils.drive.parentID = parentIdGoogleDrive;
 	
-   const app = require("./server");
+	const app = require("./server");
 
-console.log("⏳ Démarrage du bot...");
+	console.log("⏳ Démarrage du bot...");
 
-// Charger le bot
-require("./bot/login/login.js");
+	// Charger le bot
+	require("./bot/login/login.js");
 
-console.log("✅ Bot chargé");
+	console.log("✅ Bot chargé");
 
-// Lancer le serveur seulement à la fin
-const PORT = process.env.PORT || 10000;
+	// Lancer le serveur seulement à la fin
+	const PORT = process.env.PORT || 10000;
 
-app.listen(PORT, () => {
-    console.log("🚀 Bot READY + Server LIVE sur port " + PORT);
-});
+	app.listen(PORT, () => {
+		console.log("🚀 Bot READY + Server LIVE sur port " + PORT);
+	});
 
-function compareVersion(version1, version2) {
-	const v1 = version1.split(".");
-	const v2 = version2.split(".");
-	for (let i = 0; i < 3; i++) {
-		if (parseInt(v1[i]) > parseInt(v2[i])) return 1;
-		if (parseInt(v1[i]) < parseInt(v2[i])) return -1;
+	function compareVersion(version1, version2) {
+		const v1 = version1.split(".");
+		const v2 = version2.split(".");
+		for (let i = 0; i < 3; i++) {
+			if (parseInt(v1[i]) > parseInt(v2[i])) return 1;
+			if (parseInt(v1[i]) < parseInt(v2[i])) return -1;
+		}
+		return 0;
 	}
-	return 0;
-	}
+})();
