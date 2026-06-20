@@ -153,11 +153,28 @@ const SHOP_ITEMS = {
   { id: "s19", name: "Wagyu A5", price: 8000, desc: "La viande d'exception" },
   { id: "s20", name: "Champagne de collection", price: 15000, desc: "Pour célébrer avec élégance" }
 ],
-  cafes: [
-    { id: "c1", name: "Café Latte Macchiato", price: 18, desc: "Crémeux à souhait" },
-    { id: "c2", name: "Bubble Tea Matcha", price: 30, desc: "Perles de tapioca fraîches" },
-    { id: "c3", name: "Gâteau Feuille d'Or", price: 250, desc: "Douceur haut de gamme" }
-  ],
+  fastfood: [
+  { id: "ff1", name: "Hamburger Classique", price: 15, desc: "Simple et savoureux" },
+  { id: "ff2", name: "Cheeseburger", price: 20, desc: "Avec fromage fondant" },
+  { id: "ff3", name: "Double Burger", price: 35, desc: "Deux fois plus de viande" },
+  { id: "ff4", name: "Frites Moyennes", price: 10, desc: "Croustillantes à souhait" },
+  { id: "ff5", name: "Frites XXL", price: 18, desc: "Pour les gros appétits" },
+  { id: "ff6", name: "Hot-Dog Américain", price: 25, desc: "Un classique des rues" },
+  { id: "ff7", name: "Tacos Poulet", price: 30, desc: "Bien garni et épicé" },
+  { id: "ff8", name: "Tacos Viande", price: 40, desc: "Recette généreuse" },
+  { id: "ff9", name: "Pizza Margherita", price: 45, desc: "Simple mais délicieuse" },
+  { id: "ff10", name: "Pizza 4 Fromages", price: 60, desc: "Pour les amateurs de fromage" },
+  { id: "ff11", name: "Nuggets x10", price: 28, desc: "Poulet croustillant" },
+  { id: "ff12", name: "Bucket de Poulet", price: 120, desc: "À partager entre amis" },
+  { id: "ff13", name: "Milkshake Vanille", price: 18, desc: "Frais et crémeux" },
+  { id: "ff14", name: "Milkshake Chocolat", price: 20, desc: "Pour les gourmands" },
+  { id: "ff15", name: "Donut Glacé", price: 12, desc: "Petit plaisir sucré" },
+  { id: "ff16", name: "Menu Big Boss", price: 150, desc: "Burger, frites et boisson" },
+  { id: "ff17", name: "Tacos XXL Premium", price: 250, desc: "Le monstre du fast-food" },
+  { id: "ff18", name: "Burger Wagyu Deluxe", price: 800, desc: "Viande de luxe exceptionnelle" },
+  { id: "ff19", name: "Pizza Truffe Royale", price: 1500, desc: "Saveur gastronomique unique" },
+  { id: "ff20", name: "Menu Diamant Signature", price: 5000, desc: "Le fast-food des millionnaires" }
+],
   collections: [
     { id: "a1", name: "Katana Forgé Traditionnel", price: 8000, desc: "Acier plié 1000 fois" },
     { id: "a2", name: "Armure de Samouraï Edo", price: 45000, desc: "Pièce historique certifiée" },
