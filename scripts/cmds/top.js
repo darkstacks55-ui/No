@@ -4,9 +4,9 @@ const fs = require("fs");
 
 module.exports.config = {
 	name: "top",
-	version: "1.1.0",
+	version: "1.1.1",
 	hasPermssion: 0,
-	author: "Shade / Modifié",
+	author: "Shade",
 	description: "Top 10 des plus riches par page (10 pages max)",
 	commandCategory: "economy",
 	usages: "[page]",
@@ -22,7 +22,7 @@ module.exports.run = async function ({ api, event, args, usersData }) {
 		if (page < 1) page = 1;
 		if (page > 10) page = 10;
 
-		const perPage = 10; // Changé à 10 utilisateurs par page
+		const perPage = 10;
 		const start = (page - 1) * perPage;
 
 		// 📦 Récupération des données
@@ -30,13 +30,22 @@ module.exports.run = async function ({ api, event, args, usersData }) {
 
 		if (!data) return api.sendMessage("❌ usersData.getAll non disponible", threadID, messageID);
 
-		// Filtrage, tri et découpage pour la page actuelle
+		// Filtrage, tri et découpage compatible GoatBot (u.money ou u.data.money)
 		data = data
 			.map(u => {
-				if (!u || !u.data || !u.data.bank) return null;
+				if (!u) return null;
+				
+				// Détermination de la source d'argent (Priorité u.money -> u.data.money -> 0)
+				let userMoney = 0;
+				if (u.money !== undefined) {
+					userMoney = u.money;
+				} else if (u.data && u.data.money !== undefined) {
+					userMoney = u.data.money;
+				}
+
 				return {
 					userID: u.userID,
-					money: u.data.bank.wallet || 0
+					money: userMoney
 				};
 			})
 			.filter(Boolean)
@@ -46,7 +55,7 @@ module.exports.run = async function ({ api, event, args, usersData }) {
 		if (data.length === 0)
 			return api.sendMessage(`Y'a personne sur la page ${page}`, threadID, messageID);
 
-		// 🎨 Augmentation de la hauteur du Canvas (1120px) pour accueillir 10 joueurs
+		// 🎨 Dimensions du Canvas (1120px de hauteur pour 10 joueurs)
 		const canvas = createCanvas(700, 1120);
 		const ctx = canvas.getContext("2d");
 
@@ -62,7 +71,7 @@ module.exports.run = async function ({ api, event, args, usersData }) {
 		// 👥 USERS LOOP
 		for (let i = 0; i < data.length; i++) {
 			const u = data[i];
-			const y = 140 + i * 92; // Espacement ajusté pour rentrer les 10
+			const y = 140 + i * 92;
 			const rank = start + i + 1;
 
 			const name = (await usersData.getName?.(u.userID)) || "Unknown";
@@ -152,7 +161,6 @@ module.exports.handleReply = async function ({ api, event, handleReply, usersDat
 		if (isNaN(page) || page < 1 || page > 10)
 			return api.sendMessage("Veuillez choisir une page entre 1 et 10.", threadID, messageID);
 
-		// Supprime l'ancien message avec le système handleReply si nécessaire pour éviter le spam
 		return this.run({
 			api,
 			event: { ...event, args: [page.toString()] },
