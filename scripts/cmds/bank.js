@@ -427,7 +427,7 @@ module.exports = {
                     const housingMarket = [
                         { identity: "Smart Condo Unit", cost: 50000, rent: 900 },
                         { identity: "Coastal Estate Compound", cost: 250000, rent: 5000 }
-                    ];
+                    ];  
 
                     if (operationalMode === "list") {
                         let layout = "🏙️ 【 REAL ESTATE ACQUISITION DECK 】 🏙️\n\n";
@@ -457,8 +457,16 @@ module.exports = {
                     const operationalMode = args[1]?.toLowerCase();
                     const catalog = [
                         { object: "Electric Supercar Vehicle", baseValue: 85000 },
-                        { object: "Offshore Deepwater Superyacht", baseValue: 600000 }
-                    ];
+                        { object: "Offshore Deepwater Superyacht", baseValue: 600000 },
+                        { object: "Private Business Jet", baseValue: 1200000 },
+                        { object: "Luxury Penthouse Residence", baseValue: 950000 },
+                        { object: "Exclusive Private Island", baseValue: 5000000 },
+                        { object: "Hypercar Limited Edition", baseValue: 3500000 },
+                        { object: "Mega Mansion Estate", baseValue: 2500000 },
+                        { object: "Gold-Plated Helicopter", baseValue: 1800000 },
+                        { object: "Space Tourism Ticket", baseValue: 750000 },
+                        { object: "Diamond-Encrusted Watch", baseValue: 450000 }
+                     ];
 
                     if (operationalMode === "list") {
                         let presentation = "🏎️ 【 TANGIBLE EXCLUSIVES DECK 】 🏎️\n\n";
