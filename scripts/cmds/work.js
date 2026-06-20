@@ -3,15 +3,15 @@
  * @title Advanced Work System
  * @name work
  * @class work
- * @version 2.0.0
- * @description Gagne de l'argent avec des jobs insolites et des événements aléatoires !
+ * @version 2.0.1
+ * @description Gagne de l'argent avec des jobs insolites et des événements aléatoires ! (Compatible Bank.js)
  * @usage work
  */
 
 module.exports = {
   config: {
     name: "work",
-    version: "2.0.0",
+    version: "2.0.1",
     author: "Shade + Edit",
     countDown: 10,
     role: 0,
@@ -37,7 +37,7 @@ module.exports = {
     const job = jobs[Math.floor(Math.random() * jobs.length)];
     let reward = Math.floor(Math.random() * (job.max - job.min + 1)) + job.min;
 
-    // Récupération sécurisée pour ne pas écraser les autres données (exp, data, etc.)
+    // Récupération sécurisée du profil complet de l'utilisateur
     let user = await usersData.get(senderID);
     if (!user) user = {};
     if (user.money === undefined) user.money = 0;
@@ -61,14 +61,14 @@ module.exports = {
       eventText = `🌟 **Pourboire !** Un client généreux t'a laissé +$${tip} en cachette ! 👀`;
     }
 
-    // Ajout de la récompense
+    // Ajout du salaire au portefeuille
     user.money += reward;
 
-    // Sauvegarde propre
+    // 🔒 SAUVEGARDE SÉCURISÉE COMPATIBLE BANK.JS
+    // L'opérateur ...user permet de conserver l'argent en banque (user.bank), l'exp, etc.
     await usersData.set(senderID, {
-      money: user.money,
-      exp: user.exp || 0,
-      data: user.data || {}
+      ...user,
+      money: user.money
     });
 
     return message.reply(
