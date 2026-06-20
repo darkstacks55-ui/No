@@ -421,3 +421,98 @@ module.exports = {
                     }
                     return api.sendMessage("❌ Direct syntax structure mapping: `bank business [list/buy]`", threadID, messageID);
                 }
+
+                    case "property": {
+                    const operationalMode = args[1]?.toLowerCase();
+                    const housingMarket = [
+                        { identity: "Smart Condo Unit", cost: 50000, rent: 900 },
+                        { identity: "Coastal Estate Compound", cost: 250000, rent: 5000 }
+                    ];
+
+                    if (operationalMode === "list") {
+                        let layout = "🏙️ 【 REAL ESTATE ACQUISITION DECK 】 🏙️\n\n";
+                        housingMarket.forEach((h, idx) => {
+                            layout += `${idx + 1}. **${h.identity}**\n   💰 Valuation: $${h.cost.toLocaleString()} | 💵 Rent Stream: $${h.rent}/hr\n`;
+                        });
+                        return api.sendMessage(layout, threadID, messageID);
+                    }
+
+                    if (operationalMode === "buy") {
+                        const targetIndex = parseInt(args[2]) - 1;
+                        if (isNaN(targetIndex) || !housingMarket[targetIndex]) return api.sendMessage("❌ Designate index allocation map ID.", threadID, messageID);
+                        const selection = housingMarket[targetIndex];
+
+                        if (senderProfile.money < selection.cost) return api.sendMessage("❌ Insufficient physical capital liquidity to execute closing contract.", threadID, messageID);
+
+                        senderProfile.money -= selection.cost;
+                        senderProfile.data.properties.push({ identity: selection.identity, rentPerHour: selection.rent, closingTimestamp: Date.now() });
+                        await usersData.set(senderID, senderProfile);
+
+                        return api.sendMessage(`🏙️ Deed localized. **${selection.identity}** registered to your profile portfolio. Rent automated to vault.`, threadID, messageID);
+                    }
+                    return api.sendMessage("❌ Direct syntax structure mapping: `bank property [list/buy]`", threadID, messageID);
+                }
+
+                case "luxury": {
+                    const operationalMode = args[1]?.toLowerCase();
+                    const catalog = [
+                        { object: "Electric Supercar Vehicle", baseValue: 85000 },
+                        { object: "Offshore Deepwater Superyacht", baseValue: 600000 }
+                    ];
+
+                    if (operationalMode === "list") {
+                        let presentation = "🏎️ 【 TANGIBLE EXCLUSIVES DECK 】 🏎️\n\n";
+                        catalog.forEach((lux, index) => {
+                            presentation += `${index + 1}. **${lux.object}**\n   💰 Acquisition Cost: $${lux.baseValue.toLocaleString()}\n`;
+                        });
+                        return api.sendMessage(presentation, threadID, messageID);
+                    }
+
+                    if (operationalMode === "buy") {
+                        const indexMapping = parseInt(args[2]) - 1;
+                        if (isNaN(indexMapping) || !catalog[indexMapping]) return api.sendMessage("❌ Reference valid artifact row code.", threadID, messageID);
+                        const vehicleItem = catalog[indexMapping];
+
+                        if (senderProfile.money < vehicleItem.baseValue) return api.sendMessage("❌ Account contains insufficient liquid holdings to execute premium transaction.", threadID, messageID);
+
+                        senderProfile.money -= vehicleItem.baseValue;
+                        senderProfile.data.luxury.push({ object: vehicleItem.object, initialValuation: vehicleItem.baseValue });
+                        
+                        if (vehicleItem.baseValue >= 600000 && !senderProfile.data.achievements.includes("High Roller")) {
+                            senderProfile.data.achievements.push("High Roller");
+                        }
+                        
+                        await usersData.set(senderID, senderProfile);
+                        return api.sendMessage(`🏎️ Asset delivery confirmed. You now hold ownership title to **${vehicleItem.object}**.`, threadID, messageID);
+                    }
+                    return api.sendMessage("❌ Direct syntax structure mapping: `bank luxury [list/buy]`", threadID, messageID);
+                }
+
+                case "achievements": {
+                    const arrayBadges = senderProfile.data.achievements;
+                    if (arrayBadges.length === 0) return api.sendMessage("🏅 Profile has not recorded distinct operational achievements.", threadID, messageID);
+                    return api.sendMessage(`🏅 【 RECORDED SYSTEM BADGES 】 🏅\n\n${arrayBadges.map(item => `• **${item}**`).join("\n")}`, threadID, messageID);
+                }
+
+                case "rep": {
+                    const targetID = Object.keys(event.mentions)[0];
+                    if (!targetID) return api.sendMessage("❌ Tag targeted user network profile to endorse status.", threadID, messageID);
+                    if (targetID === senderID) return api.sendMessage("❌ Endorsement paradox. Cannot rank self.", threadID, messageID);
+
+                    let targetProfile = await getUserProfile(targetID);
+                    targetProfile.data.reputation += 1;
+                    await usersData.set(targetID, targetProfile);
+
+                    return api.sendMessage(`🌟 Endorsement tracked. Added +1 Reputation points to the targeted user matrix.`, threadID, messageID);
+                }
+
+                default: {
+                    return api.sendMessage("❌ Unrecognized system sub-routing module parameter context. Try `bank help`.", threadID, messageID);
+                }
+            }
+        } catch (systemError) {
+            console.error(systemError);
+            return api.sendMessage(`❌ Fatal Runtime Exception caught during operation protocol tracking: ${systemError.message}`, threadID, messageID);
+        }
+    }
+};
