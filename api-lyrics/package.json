@@ -1,13 +1,14 @@
 {
   "name": "api-lyrics",
   "version": "1.0.0",
-  "description": "Mon API de paroles de chansons",
+  "description": "Mon API de paroles de chansons et musique",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.19.2",
-    "lyrics-finder": "^21.4.0"
+    "lyrics-finder": "^21.4.0",
+    "scraped-youtube-search": "^1.1.2"
   }
 }
