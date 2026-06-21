@@ -11,7 +11,7 @@ module.exports = {
     role: 0,
     countDown: 5,
     description: "Fetch YouTube channel info including subscribers, views, join date, description, thumbnail.",
-    category: "information",
+    category: "media",
     guide: "{p}ytstalk <channelName>"
   },
 
