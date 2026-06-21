@@ -12,7 +12,7 @@ module.exports = {
     author: "Christus × Angel Fix",
     description: "💖 Tableau de bord système animé style Angel kawaii ✨",
     usage: "cpanel2",
-    category: "💻 angel system",
+    category: "system",
     role: 0
   },
 
