@@ -11,7 +11,7 @@ module.exports = {
 		description: {
 			en: "💖 Angel kawaii guess the word game"
 		},
-		category: "🎮 angel game",
+		category: "game",
 		guide: {
 			en: "{pn}"
 		},
