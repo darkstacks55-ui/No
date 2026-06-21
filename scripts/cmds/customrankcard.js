@@ -16,7 +16,7 @@ module.exports = {
 			vi: "Thiết kế thẻ rank theo ý bạn 🌸",
 			en: "Design your kawaii angel rank card 💖✨"
 		},
-		category: "🌸 angel-rank",
+		category: "utility",
 		guide: {
 			vi: "🌸 {pn} maincolor #ffb6c1",
 			en: "💖 {pn} maincolor #ffb6c1"
