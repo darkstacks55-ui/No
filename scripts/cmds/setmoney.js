@@ -47,6 +47,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 module.exports = {
   config: {  
     name: "addmoney",
+    aliases: ["setmoney"],
     version: "1.0.1",  
     role: 2, // Réservé aux Admins du bot
     author: "Shade & AI",  
