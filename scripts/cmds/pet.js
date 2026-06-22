@@ -57,7 +57,8 @@ module.exports.config = {
   cooldowns: 3
 };
 
-module.exports.run = async function ({ api, event, args, usersData }) {
+// Modification ici : "run" devient "onStart" pour GoatBot
+module.exports.onStart = async function ({ api, event, args, usersData }) {
   const { threadID, messageID, senderID } = event;
 
   const pets = loadPets();
@@ -196,7 +197,7 @@ module.exports.run = async function ({ api, event, args, usersData }) {
 
   // 📝 RENAME (Pour personnaliser le pet)
   if (sub === "rename") {
-    if (pet.type === "Inconnu") return api.sendMessage("🐣 Tu n'as pas de pet à renommer !", threadID, messageID);
+    if (pet.type === "Inconnu") return api.sendMessage("🐣 Tu n'as de pet à renommer !", threadID, messageID);
     const newName = args.slice(1).join(" ");
     if (!newName) return api.sendMessage("❌ Utilisation : !pet rename [nouveau nom]", threadID, messageID);
     
