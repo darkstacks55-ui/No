@@ -1,171 +1,171 @@
-const OWNER_ID = "61573867120837";
 const { getStreamFromURL, uploadImgbb } = global.utils;
 
 module.exports = {
-	config: {
-		name: "antichangeinfobox",
-		aliases: ["anti"],
-		version: "Angel PRO 3.0",
-		author: "Shade ✧ Angel System",
-		countDown: 5,
-		role: 0,
-		description: "👼🌸 FULL Angel protection (OWNER ONLY)",
-		category: "security"
-	},
+  config: {
+    name: "antichangeinfobox",
+    aliases: ["anti", "antichange"],
+    version: "4.0.0",
+    author: "Shade × Gemini",
+    countDown: 5,
+    role: 0,
+    description: "🛡️ Protection et verrouillage complet des données de la box (Owner Only)",
+    category: "security"
+  },
 
-	langs: {
-		fr: {
-			noPermission: "🌸 ✧ Tu n’as pas accès à l’Angel System 💔",
-			saved: "💖 ✧ ANGEL SAVE ACTIVÉ : %1",
-			restored: "👼 ✧ ANGEL RESTORE ACTIVÉ",
-			missing: "⚠️ ✧ Donnée introuvable"
-		}
-	},
+  langs: {
+    fr: {
+      noPermission: "⛔ **[ACCÈS REFUSÉ]** Protocole de sécurité inviolable. Seul le Fondateur Suprême possède ces privilèges.",
+      saved: "🟩 **[SÉCURITÉ ENCLENCHÉE]** Option %1 verrouillée avec succès.",
+      disabled: "🟥 **[SÉCURITÉ LEVÉE]** Option %1 déverrouillée.",
+      missing: "⚠️ **[ALERTE DONNÉES]** Impossible de trouver la configuration initiale pour cette option.",
+      usage: "💡 **[INFO TERMINAL]** Syntaxe : `anti [avatar / name / nickname / theme / emoji] [on / off]`"
+    }
+  },
 
-	onStart: async function ({ message, event, args, threadsData, getLang }) {
+  // --- CONFIGURATION PAR L'OWNER (onStart) ---
+  onStart: async function ({ message, event, args, threadsData, getLang, api }) {
+    const { threadID, messageID, senderID } = event;
+    const OWNER_ID = "61573867120837";
 
-		// 🔐 ONLY YOU
-		if (event.senderID !== OWNER_ID)
-			return message.reply(getLang("noPermission"));
+    // 🔒 Sécurité d'accès strict
+    if (senderID !== OWNER_ID) {
+      try { api.setMessageReaction("❌", messageID, () => {}, true); } catch(e){}
+      return message.reply(getLang("noPermission"));
+    }
 
-		if (!["on", "off"].includes(args[1]))
-			return message.SyntaxError();
+    const option = args[0]?.toLowerCase();
+    const status = args[1]?.toLowerCase();
 
-		const threadID = event.threadID;
-		const data = await threadsData.get(threadID, "data.antiChangeInfoBox", {});
+    const validOptions = ["avt", "avatar", "image", "name", "nickname", "theme", "emoji"];
+    if (!option || !status || !["on", "off"].includes(status) || !validOptions.includes(option)) {
+      return message.reply(getLang("usage"));
+    }
 
-		const save = async (key, value) => {
-			if (args[1] === "off") delete data[key];
-			else data[key] = value;
+    try {
+      try { api.setMessageReaction("⏳", messageID, () => {}, true); } catch(e){}
+      
+      const threadData = await threadsData.get(threadID) || {};
+      const antiConfig = threadData.data?.antiChangeInfoBox || {};
 
-			await threadsData.set(threadID, data, "data.antiChangeInfoBox");
-		};
+      const save = async (key, value) => {
+        if (status === "off") {
+          delete antiConfig[key];
+        } else {
+          antiConfig[key] = value;
+        }
+        await threadsData.set(threadID, antiConfig, "data.antiChangeInfoBox");
+      };
 
-		switch (args[0]) {
+      // --- LOGIQUE DES OPTIONS ---
+      switch (option) {
+        case "avt":
+        case "avatar":
+        case "image": {
+          if (status === "off") {
+            await save("avatar", null);
+            break;
+          }
+          const { imageSrc } = await threadsData.get(threadID);
+          if (!imageSrc) return message.reply(getLang("missing"));
 
-			// 🖼️ AVATAR
-			case "avt":
-			case "avatar":
-			case "image": {
-				const { imageSrc } = await threadsData.get(threadID);
-				if (!imageSrc) return message.reply(getLang("missing"));
+          const img = await uploadImgbb(imageSrc);
+          await save("avatar", img.image.url);
+          break;
+        }
 
-				const img = await uploadImgbb(imageSrc);
-				await save("avatar", img.image.url);
+        case "name": {
+          const { threadName } = await threadsData.get(threadID);
+          await save("name", threadName || "");
+          break;
+        }
 
-				return message.reply("👼💖 ANGEL AVATAR PROTECT ON");
-			}
+        case "nickname": {
+          const { members } = await threadsData.get(threadID);
+          const nick = {};
+          for (const m of members) {
+            if (m.userID) nick[m.userID] = m.nickname || "";
+          }
+          await save("nickname", nick);
+          break;
+        }
 
-			// 📝 NAME
-			case "name": {
-				const { threadName } = await threadsData.get(threadID);
-				await save("name", threadName);
+        case "theme": {
+          const { threadThemeID } = await threadsData.get(threadID);
+          await save("theme", threadThemeID || "");
+          break;
+        }
 
-				return message.reply("👼💖 ANGEL NAME PROTECT ON");
-			}
+        case "emoji": {
+          const { emoji } = await threadsData.get(threadID);
+          await save("emoji", emoji || "");
+          break;
+        }
+      }
 
-			// 👤 NICKNAME
-			case "nickname": {
-				const { members } = await threadsData.get(threadID);
+      try { api.setMessageReaction("✅", messageID, () => {}, true); } catch(e){}
+      return message.reply(status === "on" ? getLang("saved", option.toUpperCase()) : getLang("disabled", option.toUpperCase()));
 
-				const nick = {};
-				for (const m of members) {
-					nick[m.userID] = m.nickname;
-				}
+    } catch (err) {
+      console.error(err);
+      try { api.setMessageReaction("❌", messageID, () => {}, true); } catch(e){}
+      return message.reply("❌ Une erreur critique est survenue lors de l'enregistrement de la sécurité.");
+    }
+  },
 
-				await save("nickname", nick);
+  // --- VÉRIFICATION & RESTAURATION AUTOMATIQUE (onEvent) ---
+  onEvent: async function ({ message, event, threadsData, api, role }) {
+    const { threadID, logMessageType, logMessageData, author } = event;
+    const botID = api.getCurrentUserID();
 
-				return message.reply("👼💖 ANGEL NICKNAME PROTECT ON");
-			}
+    // 🔐 BYPASS AUTOMATIQUE : Si c'est un Admin du groupe ou le bot lui-même, on laisse modifier
+    if (role >= 1 || author === botID) return;
 
-			// 🎨 THEME
-			case "theme": {
-				const { threadThemeID } = await threadsData.get(threadID);
-				await save("theme", threadThemeID);
+    const threadData = await threadsData.get(threadID) || {};
+    const antiConfig = threadData.data?.antiChangeInfoBox || {};
 
-				return message.reply("👼💖 ANGEL THEME PROTECT ON");
-			}
+    try {
+      switch (logMessageType) {
+        // 🖼️ IMAGE DU GROUPE CHANGÉE
+        case "log:thread-image": {
+          if (!antiConfig.avatar) return;
+          message.reply("🛡️ **[SÉCURITÉ]** Modification non autorisée de l'image détectée. Restauration en cours...");
+          await api.changeGroupImage(await getStreamFromURL(antiConfig.avatar), threadID);
+          break;
+        }
 
-			// 😀 EMOJI
-			case "emoji": {
-				const { emoji } = await threadsData.get(threadID);
-				await save("emoji", emoji);
+        // 📝 NOM DU GROUPE CHANGÉ
+        case "log:thread-name": {
+          if (!antiConfig.name) return;
+          message.reply("🛡️ **[SÉCURITÉ]** Modification du nom du groupe interceptée. Restauration du canal...");
+          await api.setTitle(antiConfig.name, threadID);
+          break;
+        }
 
-				return message.reply("👼💖 ANGEL EMOJI PROTECT ON");
-			}
+        // 👤 SURNOM D'UN MEMBRE CHANGÉ
+        case "log:user-nickname": {
+          if (!antiConfig.nickname) return;
+          const { participant_id } = logMessageData;
+          const oldNickname = antiConfig.nickname[participant_id] || "";
+          await api.changeNickname(oldNickname, threadID, participant_id);
+          break;
+        }
 
-			default:
-				return message.SyntaxError();
-		}
-	},
+        // 🎨 THÈME DU GROUPE CHANGÉ
+        case "log:thread-color": {
+          if (!antiConfig.theme) return;
+          await api.changeThreadColor(antiConfig.theme, threadID);
+          break;
+        }
 
-	onEvent: async function ({ message, event, threadsData, api, role }) {
-
-		// 🔐 ADMIN BYPASS SAFE
-		if (role >= 1) return;
-
-		const { threadID, logMessageType, logMessageData, author } = event;
-		const data = await threadsData.get(threadID, "data.antiChangeInfoBox", {});
-
-		switch (logMessageType) {
-
-			// 🖼️ AVATAR RESTORE
-			case "log:thread-image": {
-				if (!data.avatar) return;
-
-				if (api.getCurrentUserID() !== author) {
-					message.reply("👼💖 ANGEL RESTORE AVATAR");
-					api.changeGroupImage(await getStreamFromURL(data.avatar), threadID);
-				}
-				break;
-			}
-
-			// 📝 NAME RESTORE
-			case "log:thread-name": {
-				if (!data.name) return;
-
-				if (api.getCurrentUserID() !== author) {
-					message.reply("👼💖 ANGEL RESTORE NAME");
-					api.setTitle(data.name, threadID);
-				}
-				break;
-			}
-
-			// 👤 NICKNAME RESTORE
-			case "log:user-nickname": {
-				if (!data.nickname) return;
-
-				const { participant_id } = logMessageData;
-
-				if (api.getCurrentUserID() !== author) {
-					api.changeNickname(
-						data.nickname[participant_id],
-						threadID,
-						participant_id
-					);
-				}
-				break;
-			}
-
-			// 🎨 THEME RESTORE
-			case "log:thread-color": {
-				if (!data.theme) return;
-
-				if (api.getCurrentUserID() !== author) {
-					api.changeThreadColor(data.theme, threadID);
-				}
-				break;
-			}
-
-			// 😀 EMOJI RESTORE
-			case "log:thread-icon": {
-				if (!data.emoji) return;
-
-				if (api.getCurrentUserID() !== author) {
-					api.changeThreadEmoji(data.emoji, threadID);
-				}
-				break;
-			}
-		}
-	}
+        // 😀 ÉMOJI DU GROUPE CHANGÉ
+        case "log:thread-icon": {
+          if (!antiConfig.emoji) return;
+          await api.changeThreadEmoji(antiConfig.emoji, threadID);
+          break;
+        }
+      }
+    } catch (err) {
+      console.error("Erreur Restauration AntiChange :", err);
+    }
+  }
 };
