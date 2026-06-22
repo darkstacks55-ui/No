@@ -8,9 +8,10 @@ const path = require("path");
 module.exports = {
   config: {
     name: "cpanel",
-    version: "5.2",
-    author: "Christus × Shade",
-    description: "🌸 Angel kawaii control panel dashboard",
+    aliases: ["panel", "dashboard"],
+    version: "6.0.0",
+    author: "Shade × Gemini",
+    description: "💎 Panneau de contrôle Cyber Émeraude Premium",
     usage: "cpanel",
     category: "system",
     role: 0
@@ -18,10 +19,10 @@ module.exports = {
 
   onStart: async function ({ api, event }) {
     try {
-      const width = 1000, height = 700;
+      const width = 1000, height = 750;
 
       const encoder = new GIFEncoder(width, height);
-      const fileName = `angel_panel_${Date.now()}.gif`;
+      const fileName = `cyber_panel_${Date.now()}.gif`;
       const filePath = path.join(__dirname, fileName);
 
       const stream = fs.createWriteStream(filePath);
@@ -29,7 +30,7 @@ module.exports = {
 
       encoder.start();
       encoder.setRepeat(0);
-      encoder.setDelay(160);
+      encoder.setDelay(140); // Légèrement plus rapide pour l'effet fluide
       encoder.setQuality(10);
 
       const canvas = createCanvas(width, height);
@@ -49,20 +50,21 @@ module.exports = {
         const used = total - free;
 
         return [
-          ["💗 BOT ANGEL UPTIME", formatUptime(process.uptime())],
-          ["🌷 CPU CORES", os.cpus().length.toString()],
-          ["🪽 NODE VERSION", process.version],
-          ["💖 RAM USAGE", (used / total * 100).toFixed(1) + "%"],
-          ["🌸 SYSTEM UPTIME", formatUptime(uptime)],
-          ["✨ CPU LOAD", os.loadavg()[0].toFixed(2)],
-          ["💎 TOTAL RAM", total.toFixed(1) + " GB"]
+          ["CORE UPTIME", formatUptime(process.uptime())],
+          ["CPU CORES", `${os.cpus().length} Cores`],
+          ["NODE VERSION", process.version],
+          ["RAM USAGE", (used / total * 100).toFixed(1) + "%"],
+          ["SYS UPTIME", formatUptime(uptime)],
+          ["CPU LOAD", os.loadavg()[0].toFixed(2)],
+          ["TOTAL RAM", total.toFixed(1) + " GB"]
         ];
       };
 
-      // 🌸 pastel angel palette
-      const colors = ["#ffd6f5", "#c7f0ff", "#fff2a8", "#d7d2ff", "#ffb3c6", "#b8fff0"];
+      // Palette Cyber Émeraude & Cyan Néon
+      const cyberColors = ["#22c55e", "#4ade80", "#10b981", "#06b6d4", "#22d3ee", "#14b8a6"];
 
-      const drawHex = (x, y, r, label, value, color) => {
+      const drawHex = (x, y, r, label, value, strokeColor, frame) => {
+        ctx.save();
         ctx.beginPath();
         for (let i = 0; i < 6; i++) {
           const angle = Math.PI / 3 * i;
@@ -72,27 +74,33 @@ module.exports = {
         }
         ctx.closePath();
 
-        ctx.strokeStyle = color;
-        ctx.shadowColor = "#ffb6e6";
-        ctx.shadowBlur = 25;
+        // Fond intérieur de l'hexagone translucide
+        ctx.fillStyle = "rgba(10, 20, 15, 0.6)";
+        ctx.fill();
+
+        // Effet Néon Extérieur
+        ctx.strokeStyle = strokeColor;
+        ctx.shadowColor = strokeColor;
+        ctx.shadowBlur = 15;
         ctx.lineWidth = 3;
         ctx.stroke();
+        ctx.restore();
 
-        ctx.shadowBlur = 0;
+        // Textes internes épurés et clairs
         ctx.textAlign = "center";
+        
+        ctx.fillStyle = "rgba(187, 247, 208, 0.7)";
+        ctx.font = "bold 14px sans-serif";
+        ctx.fillText(label, x, y - 12);
 
-        ctx.fillStyle = "#444";
-        ctx.font = "16px Arial";
-        ctx.fillText(label, x, y - 10);
-
-        ctx.fillStyle = "#000";
-        ctx.font = "bold 20px Arial";
-        ctx.fillText(value, x, y + 20);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 22px monospace";
+        ctx.fillText(value, x, y + 18);
       };
 
       const cx = width / 2;
-      const cy = height / 2;
-      const spacing = 180;
+      const cy = height / 2 + 30; // Centrage décalé pour le titre
+      const spacing = 200;
 
       const positions = [
         [cx, cy - spacing],
@@ -104,46 +112,70 @@ module.exports = {
         [cx, cy]
       ];
 
-      for (let frame = 0; frame < 30; frame++) {
+      for (let frame = 0; frame < 20; frame++) {
         const stats = getStats();
-
         ctx.clearRect(0, 0, width, height);
 
-        // 🌸 soft angel background
+        // Fond Spatial Sombre Émeraude
         const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, "#fff0f6");
-        gradient.addColorStop(1, "#f0f8ff");
-
+        gradient.addColorStop(0, "#0a0f0d");
+        gradient.addColorStop(0.5, "#0d1f17");
+        gradient.addColorStop(1, "#0a0f0d");
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
-        // 🌸 title
-        ctx.fillStyle = "#ff7eb9";
-        ctx.font = "bold 36px Arial";
-        ctx.textAlign = "center";
-        ctx.shadowColor = "#ffb6e6";
-        ctx.shadowBlur = 20;
-        ctx.fillText("🌸 ANGEL CONTROL PANEL 🌸", width / 2, 70);
-        ctx.shadowBlur = 0;
+        // Particules lumineuses d'arrière-plan (Étoiles vertes)
+        ctx.fillStyle = "rgba(34, 197, 94, 0.15)";
+        for (let i = 0; i < 40; i++) {
+          let starX = (Math.sin(i + frame) * 0.5 + 0.5) * width;
+          let starY = (Math.cos(i * 2 + frame) * 0.5 + 0.5) * height;
+          ctx.beginPath();
+          ctx.arc(starX, starY, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
-        // 🌸 time
-        ctx.fillStyle = "#555";
-        ctx.font = "16px Arial";
+        // Grand Titre Cyber-Émeraude
+        ctx.save();
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 38px sans-serif";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#22c55e";
+        ctx.shadowBlur = 18;
+        ctx.fillText("⚙️ SYSTEM CONTROL PANEL", width / 2, 85);
+        ctx.restore();
+
+        // Sous-titre
+        ctx.fillStyle = "rgba(34, 197, 94, 0.5)";
+        ctx.font = "600 14px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("⚡ PREMIUM SYSTEM GATEWAY OVERVIEW ⚡", width / 2, 120);
+
+        // Métadonnées système (Haut Droite / Haut Gauche)
+        ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+        ctx.font = "600 15px monospace";
+        
         ctx.textAlign = "right";
         ctx.fillText(
-          "🌸 " + moment().tz("Africa/Abidjan").format("DD/MM/YYYY HH:mm:ss"),
-          width - 30,
-          40
+          "🕒 " + moment().tz("Africa/Kinshasa").format("DD/MM/YYYY | HH:mm:ss"),
+          width - 40,
+          45
         );
 
         ctx.textAlign = "left";
-        ctx.fillText(`🪽 OS : ${os.platform()} (x64)`, 30, 40);
+        ctx.fillText(`💻 PLATFORM : ${os.platform().toUpperCase()} (x64)`, 40, 45);
 
-        // 🌸 hex stats
+        // Génération des modules hexagonaux dynamiques
         for (let i = 0; i < stats.length; i++) {
-          const color = colors[(frame + i) % colors.length];
-          drawHex(positions[i][0], positions[i][1], 90, stats[i][0], stats[i][1], color);
+          const colorIndex = (frame + i) % cyberColors.length;
+          const color = cyberColors[colorIndex];
+          drawHex(positions[i][0], positions[i][1], 100, stats[i][0], stats[i][1], color, frame);
         }
+
+        // Pied de page personnalisé
+        ctx.textAlign = "center";
+        ctx.fillStyle = "rgba(34, 197, 94, 0.3)";
+        ctx.font = "600 13px monospace";
+        ctx.fillText("♦ DESIGN BY SHADE ♦ ENGINE MATRIX OVERLOAD ♦", width / 2, height - 30);
 
         encoder.addFrame(ctx);
       }
@@ -152,14 +184,14 @@ module.exports = {
 
       stream.on("finish", () => {
         api.sendMessage({
-          body: "🌸 Voici ton Angel Control Panel 💗",
+          body: "⚡ **[CYBER-PANEL]** Terminal central rechargé avec succès. Données à jour.",
           attachment: fs.createReadStream(filePath)
         }, event.threadID, () => fs.unlinkSync(filePath));
       });
 
     } catch (err) {
       console.error(err);
-      api.sendMessage("❌ Erreur du panneau angel 💔", event.threadID);
+      api.sendMessage("❌ Échec de l'initialisation du terminal Matrix.", event.threadID);
     }
   }
 };
