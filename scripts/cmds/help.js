@@ -97,3 +97,34 @@ module.exports = {
       // --- Command Info ---
       const query = args[0].toLowerCase();
       const command = commands.get(query) || commands.get(aliases.get(query));
+      if(!command) {
+        const res = await message.reply({ body:`❌ 𝐂𝐨𝐦𝐦𝐚𝐧𝐝 "${query}" 𝐧𝐨𝐭 𝐟𝐨𝐮𝐧𝐝.`, attachment: await global.utils.getStreamFromURL(avatar)});
+        return autoDelete(res.messageID);
+      }
+
+      const cfg = command.config || {};
+      const roleMap = {0:"𝐀𝐥𝐥 𝐔𝐬𝐞𝐫𝐬",1:"𝐆𝐫𝐨𝐮𝐩 𝐀𝐝𝐦𝐢𝐧𝐬",2:"𝐁𝐨𝐭 𝐀𝐝𝐦𝐢𝐧𝐬"};
+      const aliasesList = Array.isArray(cfg.aliases) && cfg.aliases.length ? cfg.aliases.map(a=>toAZStyle(a)).join(", ") : "𝐍𝐨𝐧𝐞";
+      const desc = cfg.longDescription?.en || cfg.shortDescription?.en || "𝐍𝐨 𝐝𝐞𝐬𝐜𝐫𝐢𝐩𝐭𝐢𝐨𝐧.";
+      const usage = cfg.guide?.en || cfg.name;
+
+      const card = [
+        `✨ ${toAZStyle(cfg.name)} ✨`,
+        `📝 𝐃𝐞𝐬𝐜𝐫𝐢𝐩𝐭𝐢𝐨𝐧: ${desc}`,
+        `📂 𝐂𝐚𝐭𝐞𝐠𝐨𝐫𝐲: ${cfg.category || "Misc"}`,
+        `🔤 𝐀𝐥𝐢𝐚𝐬𝐞𝐬: ${aliasesList}`,
+        `🛡️ 𝐑𝐨𝐥𝐞: ${roleMap[cfg.role] || "Unknown"} | ⏱️ 𝐂𝐨𝐨𝐥𝐝𝐨𝐰𝐧: ${cfg.countDown || 1}s`,
+        `🚀 𝐕𝐞𝐫𝐬𝐢𝐨𝐧: ${cfg.version || "1.0"} | 👨‍💻 𝐀𝐮𝐭𝐡𝐨𝐫: ${cfg.author || "Unknown"}`,
+        `💡 𝐔𝐬𝐚𝐠𝐞: .${toAZStyle(usage)}`,
+        `🔧 𝐎𝐩𝐭𝐢𝐨𝐧𝐬: .help ${toAZStyle(cfg.name.toLowerCase())} [-u | -i | -a]`
+      ].join("\n");
+
+      const res = await message.reply({ body: card, attachment: await global.utils.getStreamFromURL(avatar)});
+      return autoDelete(res.messageID);
+
+    } catch(err) {
+      console.error("HELP CMD ERROR:", err);
+      await message.reply(`⚠️ 𝐄𝐫𝐫𝐨𝐫: ${err.message || err}`);
+    }
+  }
+};
