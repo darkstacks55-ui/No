@@ -1,121 +1,99 @@
-const { commands } = global.GoatBot;
-const config = global.GoatBot.config;
-const axios = require("axios");
+const { commands, aliases } = global.GoatBot;
 
-function toBold(text) {
-  const map = {
-    a:"𝐚", b:"𝐛", c:"𝐜", d:"𝐝", e:"𝐞", f:"𝐟", g:"𝐠", h:"𝐡", i:"𝐢", j:"𝐣",
-    k:"𝐤", l:"𝐥", m:"𝐦", n:"𝐧", o:"𝐨", p:"𝐩", q:"𝐪", r:"𝐫", s:"𝐬", t:"𝐭",
-    u:"𝐮", v:"𝐯", w:"𝐰", x:"𝐱", y:"𝐲", z:"𝐳"
+// --- Fonction pour transformer un texte en style 𝑨𝒁 ---
+function toAZStyle(text) {
+  const azMap = {
+    A:'𝑨', B:'𝑩', C:'𝑪', D:'𝑫', E:'𝑬', F:'𝑭', G:'𝑮', H:'𝑯', I:'𝑰', J:'𝑱',
+    K:'𝑲', L:'𝑳', M:'𝑴', N:'𝑵', O:'𝑶', P:'𝑷', Q:'𝑸', R:'𝑹', S:'𝑺', T:'𝑻',
+    U:'𝑼', V:'𝑽', W:'𝑾', X:'𝑿', Y:'𝒀', Z:'𝒁',
+    a:'𝒂', b:'𝒃', c:'𝒄', d:'𝒅', e:'𝒆', f:'𝒇', g:'𝒈', h:'𝒉', i:'𝒊', j:'𝒋',
+    k:'𝒌', l:'𝒍', m:'𝒎', n:'𝒏', o:'𝒐', p:'𝒑', q:'𝒒', r:'𝒓', s:'𝒔', t:'𝒕',
+    u:'𝒖', v:'𝒗', w:'𝒘', x:'𝒙', y:'𝒚', z:'𝒛',
+    '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
+    ' ':' '
   };
-  return text.split("").map(c => map[c.toLowerCase()] || c).join("");
-}
-
-function formatCategory(cat) {
-  const map = {
-    owner: "👑 OWNER",
-    admin: "🛡️ ADMINISTRATION",
-    economy: "💰 ÉCONOMIE",
-    ai: "🤖 IA",
-    system: "⭐ ANGEL SYSTEM",
-    image: "🎨 IMAGES",
-    media: "🎵 MÉDIA",
-    game: "🎮 GAMES",
-    utility: "📜 UTILITAIRES",
-    download: "📦 DOWNLOAD",
-    security: "🔒 SÉCURITÉ",
-    settings: "⚙️ CONFIG",
-    other: "❓ AUTRE"
-  };
-
-  return map[cat.toLowerCase()] || `❓ ${cat.toUpperCase()}`;
+  return text.split('').map(c => azMap[c] || c).join('');
 }
 
 module.exports = {
   config: {
     name: "help",
-    version: "10.0",
-    author: "Shade",
+    version: "5.2",
+    author: "Christus",
     countDown: 2,
     role: 0,
-    category: "settings",
-    guide: "help [commande]"
+    shortDescription: { en: "𝐸𝑥𝑝𝑙𝑜𝑟𝑒 𝑎𝑙𝑙 𝑏𝑜𝑡 𝑐𝑜𝑚𝑚𝑎𝑛𝑑𝑠" },
+    category: "info",
+    guide: { en: "help <command> — 𝐠𝐞𝐭 𝐜𝐨𝐦𝐦𝐚𝐧𝐝 𝐢𝐧𝐟𝐨, -ai 𝐟𝐨𝐫 𝐬𝐦𝐚𝐫𝐭 𝐬𝐮𝐠𝐠𝐞𝐬𝐭𝐢𝐨𝐧𝐬" },
   },
 
-  onStart: async function ({ message, args }) {
-
-    const imageURL = "https://files.catbox.moe/ihbb9m.png";
-    let streamData;
-
+  onStart: async function ({ message, args, event, usersData }) {
     try {
-      const res = await axios.get(imageURL, { responseType: "stream" });
-      streamData = res.data;
-    } catch {}
+      const uid = event.senderID;
+      let avatar = await usersData.getAvatarUrl(uid).catch(() => null);
+      if (!avatar) avatar = "https://i.imgur.com/TPHk4Qu.png";
 
-    // ───── DÉTAIL COMMANDE ─────
-    if (args[0]) {
-      const search = args[0].toLowerCase();
+      const autoDelete = async (msgID, delay = 15000) => {
+        const countdown = [10,5,3,2,1];
+        countdown.forEach((s) => {
+          setTimeout(() => {
+            message.edit(msgID, `⏳ 𝐒𝐮𝐩𝐩𝐫𝐞𝐬𝐬𝐢𝐨𝐧 𝐝𝐚𝐧𝐬 ${s}s...`);
+          }, delay - s*1000);
+        });
+        setTimeout(async () => {
+          try { await message.unsend(msgID); } 
+          catch (err) { console.error("❌ 𝐇𝐞𝐥𝐩 𝐝𝐞𝐥𝐞𝐭𝐞 𝐞𝐫𝐫𝐨𝐫:", err.message); }
+        }, delay);
+      };
 
-      const cmd = commands.get(search) ||
-        Array.from(commands.values())
-          .find(c => c.config?.aliases?.includes(search));
+      // --- AI Suggestion ---
+      if(args[0]?.toLowerCase() === "-ai") {
+        const keyword = args[1]?.toLowerCase() || "";
+        const allCmds = Array.from(commands.keys());
+        const suggestions = allCmds
+          .map(cmd => ({ cmd, match: Math.max(40, 100 - Math.abs(cmd.length - keyword.length) * 10) }))
+          .filter(c => c.cmd.includes(keyword))
+          .sort((a,b)=>b.match - a.match)
+          .slice(0,10);
 
-      if (!cmd) return message.reply("❌ Commande introuvable.");
-
-      const c = cmd.config;
-
-      return message.reply({
-        body: `
-╭─ ⋆｡˚ ♡ 𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐃𝐄𝐓𝐀𝐈𝐋𝐒 ♡ ˚｡⋆ ─╮
-✨ Nom : ${c.name.toUpperCase()}
-📝 Desc : ${c.shortDescription?.en || "Aucune"}
-🏷️ Catégorie : ${c.category || "other"}
-⏳ Cooldown : ${c.countDown || 0}s
-🔐 Permission : ${c.role === 2 ? "Admin" : c.role === 1 ? "Modérateur" : "Utilisateur"}
-╰──────────────────────────╯
-
-💡 Utilisation :
-➤ ${config.prefix || ""}${c.guide?.en || c.name}
-        `,
-        attachment: streamData
-      });
-    }
-
-    // ───── MENU ─────
-    const cats = {};
-
-    for (const [name, cmd] of commands) {
-      const cat = cmd?.config?.category || "other";
-
-      if (!cats[cat]) cats[cat] = [];
-      cats[cat].push(name);
-    }
-
-    let menu = `🔍 ${toBold("Available Commands")} 🧰 (${commands.size})\n`;
-
-    for (const cat of Object.keys(cats).sort()) {
-      menu += `\n${formatCategory(cat)} (${cats[cat].length})\n\n`;
-
-      let line = "";
-      cats[cat].sort().forEach((cmd, i) => {
-        line += `📄 ${cmd}  `;
-        if ((i + 1) % 3 === 0) {
-          menu += line + "\n";
-          line = "";
+        if(!suggestions.length) {
+          const res = await message.reply({ body:"❌ 𝐍𝐨 𝐬𝐮𝐠𝐠𝐞𝐬𝐭𝐢𝐨𝐧𝐬 𝐟𝐨𝐮𝐧𝐝.", attachment: await global.utils.getStreamFromURL(avatar)});
+          return autoDelete(res.messageID);
         }
-      });
 
-      if (line) menu += line + "\n";
-    }
+        const body = [
+          "🤖 𝐀𝐈 𝐒𝐮𝐠𝐠𝐞𝐬𝐭𝐢𝐨𝐧𝐬:",
+          ...suggestions.map(s=>`• ${toAZStyle(s.cmd)} (${s.match}% 𝐦𝐚𝐭𝐜𝐡)`)
+        ].join("\n");
 
-    const p = config.prefix || "!";
+        const res = await message.reply({ body, attachment: await global.utils.getStreamFromURL(avatar) });
+        return autoDelete(res.messageID);
+      }
 
-    menu += `\n➜ ${toBold("Help")}: ${p}help <cmd>`;
-    menu += `\n➜ ${toBold("Owner")} @𝐒𝐡𝐚𝐝𝐞 🪐`;
+      // --- Command List ---
+      if(!args || args.length === 0) {
+        let body = "🍁𝐵𝑂𝑇 𝐶𝑂𝑀𝑀𝐴𝑁𝐷𝑆🍁\n\n";
+        const categories = {};
+        for(let [name, cmd] of commands) {
+          const cat = cmd.config.category || "Misc";
+          if(!categories[cat]) categories[cat] = [];
+          categories[cat].push(name);
+        }
 
-    return message.reply({
-      body: menu,
-      attachment: streamData
-    });
-  }
-};
+        for(const cat of Object.keys(categories).sort()) {
+          const list = categories[cat].sort().map(c=>`• ${toAZStyle(c)}`).join("  ");
+          body += `🍁 ${cat}\n${list || "𝐍𝐨 𝐜𝐨𝐦𝐦𝐚𝐧𝐝𝐬"}\n\n`;
+        }
+
+        body += `📊 𝐓𝐨𝐭𝐚𝐥 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬: ${commands.size}\n`;
+        body += `🔧 𝐂𝐨𝐦𝐦𝐚𝐧𝐝 𝐈𝐧𝐟𝐨: .help <command>\n`;
+        body += `🔍 𝐒𝐞𝐚𝐫𝐜𝐡: .help -s <keyword>\n`;
+        body += `🤖 𝐀𝐈 𝐒𝐮𝐠𝐠𝐞𝐬𝐭: .help -ai <command>\n`;
+
+        const res = await message.reply({ body, attachment: await global.utils.getStreamFromURL(avatar)});
+        return autoDelete(res.messageID);
+      }
+
+      // --- Command Info ---
+      const query = args[0].toLowerCase();
+      const command = commands.get(query) || commands.get(aliases.get(query));
