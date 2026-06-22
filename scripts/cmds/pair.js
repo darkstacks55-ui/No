@@ -1,132 +1,171 @@
-const axios = require("axios");
 const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
 const path = require("path");
 
-const baseUrl = "https://raw.githubusercontent.com/Saim12678/Saim69/1a8068d7d28396dbecff28f422cb8bc9bf62d85f/font";
-
 module.exports = {
   config: {
     name: "pair",
-    aliases: ["lovepair", "match"],
-    author: "Christus ✨ | Angel Edit by Shade",
-    version: "1.0 Angel",
+    aliases: ["lovepair", "match", "duo"],
+    author: "Shade × Gemini",
+    version: "3.0.0",
     role: 0,
     category: "game",
-    shortDescription: {
-      fr: "🌸 Trouve ton duo kawaii du destin 💞"
-    },
-    longDescription: {
-      fr: "💘 Génère un couple aléatoire avec un style angel kawaii ultra doux 🌸✨"
-    },
+    description: "⚡ Analyse la matrice du groupe pour générer ton duo compatible par genre",
     guide: {
-      fr: "{p}{n} — découvrir ton duo du destin 💞"
+      fr: "{p}{n} — Lancer la recherche de compatibilité dans le groupe"
     }
   },
 
   onStart: async function ({ api, event, usersData }) {
+    const { threadID, messageID, senderID } = event;
+
     try {
-      const senderData = await usersData.get(event.senderID);
-      let senderName = senderData.name;
+      try { api.setMessageReaction("⏳", messageID, () => {}, true); } catch(e){}
 
-      const threadData = await api.getThreadInfo(event.threadID);
-      const users = threadData.userInfo;
+      // Récupération des informations du groupe et du demandeur
+      const threadInfo = await api.getThreadInfo(threadID);
+      const users = threadInfo.userInfo || [];
 
-      const myData = users.find(u => u.id === event.senderID);
+      const myData = users.find(u => u.id === senderID);
       if (!myData || !myData.gender) {
-        return api.sendMessage("🌸 Impossible de lire ton énergie du cœur 💔", event.threadID, event.messageID);
+        return api.sendMessage("🟥 **[ERREUR MATRICE]** Impossible de scanner ton profil réseau ou ton genre.", threadID, messageID);
       }
 
       const myGender = myData.gender.toUpperCase();
       let candidates = [];
 
+      // Filtrage par genre opposé (MALE / FEMALE)
       if (myGender === "MALE") {
-        candidates = users.filter(u => u.gender === "FEMALE" && u.id !== event.senderID);
+        candidates = users.filter(u => u.gender === "FEMALE" && u.id !== senderID);
       } else if (myGender === "FEMALE") {
-        candidates = users.filter(u => u.gender === "MALE" && u.id !== event.senderID);
+        candidates = users.filter(u => u.gender === "MALE" && u.id !== senderID);
       } else {
-        return api.sendMessage("🌙 Ton énergie est mystérieuse… impossible de matcher 💫", event.threadID, event.messageID);
+        candidates = users.filter(u => u.id !== senderID); // Si genre non spécifié, prend tout le monde
       }
 
       if (!candidates.length) {
-        return api.sendMessage("💔 Aucun cœur compatible trouvé dans ce monde 🌸", event.threadID, event.messageID);
+        try { api.setMessageReaction("❌", messageID, () => {}, true); } catch(e){}
+        return api.sendMessage("📡 **[RECHERCHE ÉCHOUÉE]** Aucun sujet compatible détecté dans ce canal actuellement.", threadID, messageID);
       }
 
+      // Sélection de la cible
       const match = candidates[Math.floor(Math.random() * candidates.length)];
-      let matchName = match.name;
+      
+      const senderName = await usersData.getName(senderID) || "Utilisateur Principal";
+      const matchName = await usersData.getName(match.id) || "Sujet Synchronisé";
 
-      // Font (optionnel)
-      let fontMap = {};
-      try {
-        const { data } = await axios.get(`${baseUrl}/21.json`);
-        fontMap = data;
-      } catch {}
-
-      const convert = (t) => t.split("").map(c => fontMap[c] || c).join("");
-
-      senderName = convert(senderName);
-      matchName = convert(matchName);
-
-      const width = 800;
-      const height = 400;
+      // Dimensions du Canvas Premium
+      const width = 800, height = 400;
       const canvas = createCanvas(width, height);
       const ctx = canvas.getContext("2d");
 
-      // 🌸 Background kawaii
-      const bg = await loadImage("https://files.catbox.moe/hzapdg.jpg");
-      ctx.drawImage(bg, 0, 0, width, height);
+      // 🌌 Fond Cyber Émeraude Sombre
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, "#09120e");
+      gradient.addColorStop(0.5, "#0d261a");
+      gradient.addColorStop(1, "#09120e");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
 
-      const img1 = await loadImage(
-        `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720`
-      );
-      const img2 = await loadImage(
-        `https://graph.facebook.com/${match.id}/picture?width=720&height=720`
-      );
+      // Dessin des grilles technologiques en arrière-plan
+      ctx.strokeStyle = "rgba(34, 197, 94, 0.1)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < width; i += 40) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke();
+      }
+      for (let j = 0; j < height; j += 40) {
+        ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(width, j); ctx.stroke();
+      }
 
-      function circle(ctx, img, x, y, size) {
+      // Liens des avatars hautement stables via l'identifiant
+      const avatarSenderUrl = `https://graph.facebook.com/${senderID}/picture?type=large`;
+      const avatarMatchUrl = `https://graph.facebook.com/${match.id}/picture?type=large`;
+
+      // Chargement sécurisé des images (avec fallback si image corrompue)
+      let img1, img2;
+      try {
+        img1 = await loadImage(avatarSenderUrl);
+      } catch (e) {
+        img1 = await loadImage("https://files.catbox.moe/w9df05.png"); // Image de secours par défaut
+      }
+
+      try {
+        img2 = await loadImage(avatarMatchUrl);
+      } catch (e) {
+        img2 = await loadImage("https://files.catbox.moe/w9df05.png");
+      }
+
+      // Fonction pour dessiner les portraits avec encadrement néon émeraude
+      function drawCyberAvatar(ctx, img, x, y, size) {
         ctx.save();
+        // Lueur néon verte
+        ctx.shadowColor = "#22c55e";
+        ctx.shadowBlur = 15;
+        ctx.strokeStyle = "#4ade80";
+        ctx.lineWidth = 4;
+        
         ctx.beginPath();
         ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
-        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + size / 2, y + size / 2, size / 2 - 2, 0, Math.PI * 2);
         ctx.clip();
         ctx.drawImage(img, x, y, size, size);
         ctx.restore();
       }
 
-      circle(ctx, img1, 170, 100, 200);
-      circle(ctx, img2, 460, 100, 200);
+      // Positionnement propre des avatars
+      drawCyberAvatar(ctx, img1, 140, 100, 190);
+      drawCyberAvatar(ctx, img2, 470, 100, 190);
 
-      const file = path.join(__dirname, "angel_pair.png");
+      // Dessin du symbole central de synchronisation (Le cœur Matrix Émeraude)
+      ctx.save();
+      ctx.font = "bold 50px sans-serif";
+      ctx.fillStyle = "#22c55e";
+      ctx.shadowColor = "#22c55e";
+      ctx.shadowBlur = 20;
+      ctx.textAlign = "center";
+      ctx.fillText("⚡", width / 2, height / 2 + 15);
+      ctx.restore();
+
+      const file = path.join(__dirname, `cyber_pair_${Date.now()}.png`);
       const out = fs.createWriteStream(file);
       canvas.createPNGStream().pipe(out);
 
       out.on("finish", () => {
-        const love = Math.floor(Math.random() * 31) + 70;
+        const rate = Math.floor(Math.random() * 31) + 70; // Score de 70% à 100%
 
-        const msg =
-`🌸 𝑨𝒏𝒈𝒆𝒍 𝑷𝒂𝒊𝒓 𝑴𝒂𝒈𝒊𝒄 💞✨
+        const msg = 
+`⚡ **[MATRIX PAIR GENERATOR]**
+━━━━━━━━━━━━━━━━━━━━━━━━━
+🟩 **Sujet A :** ${senderName}
+🟩 **Sujet B :** ${matchName}
+━━━━━━━━━━━━━━━━━━━━━━━━━
+📟 **Analyse des flux :** Les protocoles indiquent une convergence de vos terminaux.
+🧬 **Taux de synchronisation :** ${rate}%
 
-💖 ${senderName}
-💖 ${matchName}
+» *[Système] Connexion sécurisée établie avec succès.*`;
 
-🌷 Le destin a doucement lié vos chemins…
-🕊️ Énergie compatible : ${love}%
-
-💌 "Deux cœurs, une seule étoile…" ✨`;
+        try { api.setMessageReaction("💎", messageID, () => {}, true); } catch(e){}
 
         api.sendMessage(
           {
             body: msg,
             attachment: fs.createReadStream(file)
           },
-          event.threadID,
+          threadID,
           () => fs.unlinkSync(file),
-          event.messageID
+          messageID
         );
       });
 
-    } catch (e) {
-      api.sendMessage("💔 Une erreur a brisé la magie angel…", event.threadID, event.messageID);
+    } catch (globalError) {
+      console.error(globalError);
+      try { api.setMessageReaction("❌", messageID, () => {}, true); } catch(e){}
+      api.sendMessage("🟥 **[ERREUR SCRIPT]** Le générateur n'a pas pu compiler les images en mémoire.", threadID, messageID);
     }
   }
 };
