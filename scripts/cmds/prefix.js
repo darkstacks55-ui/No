@@ -87,3 +87,19 @@ module.exports = {
 												global.GoatBot.config.prefix = newPrefix;
 												fs.writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
 												return message.reply(getLang("successGlobal", newPrefix));
+								}
+								else {
+												await threadsData.set(event.threadID, newPrefix, "data.prefix");
+												return message.reply(getLang("successThisThread", newPrefix));
+								}
+				},
+
+				onChat: async function ({ event, message, getLang, usersData }) {
+								if (event.body && event.body.toLowerCase() === "prefix")
+												return async () => {
+																const userName = await usersData.getName(event.senderID);
+																const botName = global.GoatBot.config.nickNameBot || "Bot";
+																return message.reply(getLang("myPrefix", userName, global.GoatBot.config.prefix, utils.getPrefix(event.threadID), botName));
+												};
+				}
+};
