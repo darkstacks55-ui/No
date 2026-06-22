@@ -1,13 +1,13 @@
 module.exports = {
   config: {
     name: "set",
-    version: "2.1.0",
+    version: "2.2.0",
     author: "Shade & AI",
-    shortDescription: "Gestion des données admin",
-    longDescription: "Définir l'argent, l'expérience ou des variables personnalisées d'un utilisateur sans écraser ses données.",
+    shortDescription: "Gestion des données admin avec support Reply",
+    longDescription: "Définir l'argent, l'expérience ou des variables personnalisées d'un utilisateur par tag, reply ou sur soi-même.",
     category: "settings",
     guide: {
-      fr: "{p}set money [montant] [@utilisateur]\n{p}set exp [montant] [@utilisateur]\n{p}set custom [variable] [valeur] [@utilisateur]"
+      fr: "En réponse ou sur soi-même :\n{p}set money [montant]\nPar tag :\n{p}set money [montant] [@utilisateur]"
     },
     role: 2 // Niveau Admin requis par le système
   },
@@ -26,7 +26,14 @@ module.exports = {
         return api.sendMessage("❌ Action manquante. Options : money, exp, custom", event.threadID);
       }
 
-      const targetID = Object.keys(event.mentions)[0] || event.senderID;
+      // --- LOGIQUE DE DÉTECTION DE LA CIBLE (Reply > Tag > Soi-même) ---
+      let targetID = event.senderID;
+      
+      if (event.type === "message_reply" && event.messageReply) {
+        targetID = event.messageReply.senderID;
+      } else if (Object.keys(event.mentions).length > 0) {
+        targetID = Object.keys(event.mentions)[0];
+      }
       
       // Récupération sécurisée des données actuelles pour éviter de les écraser
       let userData = await usersData.get(targetID);
@@ -63,7 +70,7 @@ module.exports = {
           const variable = args[1];
           const value = args[2];
           if (!variable || value === undefined) {
-            return api.sendMessage("❌ Utilisation : {p}set custom [variable] [valeur] [@utilisateur]", event.threadID);
+            return api.sendMessage("❌ Utilisation : {p}set custom [variable] [valeur]", event.threadID);
           }
           
           // Modifie ou ajoute la variable dans l'objet "data" de l'utilisateur
