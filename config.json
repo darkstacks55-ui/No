@@ -25,13 +25,13 @@
     "ignoreCommand": []
   },
   "adminBot": [
-  "61573867120837"
+  "61590619952957"
 ],
 "developer": [
-  "61573867120837"
+  "61590619952957"
 ],
 "vipuser": [
-  "61573867120837"
+  "61590619952957"
 ],
   "reactBy": {
     "delete": ["🗑️", "❌", "😠", "😡", "😾"],
@@ -39,7 +39,7 @@
   }, 
   "whiteListMode": {
     "enable": false,
-    "whiteListIds": [],
+    "whiteListIds": [61590619952957],
     "notes": "if you enable this feature, only the ids in the whiteListIds section can use the bot"
   },
   "nickNameBot": "ཐི༑ཋྀ SUKUNA જ⁀➴ ♡ 𝒃𝒐𝒕 🍁",
